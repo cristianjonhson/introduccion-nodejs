@@ -25,6 +25,36 @@ console.log('   - Modelo:', cpus[0].model);
 console.log('   - Núcleos:', cpus.length);
 console.log('   - Velocidad:', cpus[0].speed, 'MHz');
 
+// Información detallada de cada núcleo
+console.log('\n   📊 Detalles por núcleo:');
+cpus.forEach((cpu, index) => {
+  const times = cpu.times;
+  const total = times.user + times.nice + times.sys + times.idle + times.irq;
+  const usage = ((total - times.idle) / total * 100).toFixed(2);
+  
+  console.log(`   Core ${index}:`);
+  console.log(`      - User: ${times.user}ms`);
+  console.log(`      - System: ${times.sys}ms`);
+  console.log(`      - Idle: ${times.idle}ms`);
+  console.log(`      - Uso: ${usage}%`);
+});
+
+// Resumen de uso promedio
+const totalUser = cpus.reduce((acc, cpu) => acc + cpu.times.user, 0);
+const totalSys = cpus.reduce((acc, cpu) => acc + cpu.times.sys, 0);
+const totalIdle = cpus.reduce((acc, cpu) => acc + cpu.times.idle, 0);
+const totalAll = cpus.reduce((acc, cpu) => {
+  const t = cpu.times;
+  return acc + t.user + t.nice + t.sys + t.idle + t.irq;
+}, 0);
+const avgUsage = ((totalAll - totalIdle) / totalAll * 100).toFixed(2);
+
+console.log('\n   📈 Resumen de uso promedio:');
+console.log(`      - Tiempo usuario: ${totalUser}ms`);
+console.log(`      - Tiempo sistema: ${totalSys}ms`);
+console.log(`      - Tiempo idle: ${totalIdle}ms`);
+console.log(`      - Uso promedio: ${avgUsage}%`);
+
 // 4. Información de memoria
 console.log('\n💾 Información de Memoria:');
 const totalMem = os.totalmem();
