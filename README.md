@@ -29,6 +29,19 @@ introduccion-nodejs/
 │   │   ├── index.mjs      # Archivo principal ES Modules
 │   │   └── utils.mjs      # Módulo de utilidades
 │   └── README.md          # Documentación de extensiones
+├── modulos-nativos/        # Ejemplos de módulos nativos de Node.js
+│   ├── cjs/               # Módulos nativos con CommonJS
+│   │   ├── fs-example.js  # File System
+│   │   ├── path-example.js # Path
+│   │   ├── os-example.js  # Operating System
+│   │   └── http-example.js # HTTP Server
+│   ├── esm/               # Módulos nativos con ES Modules
+│   │   ├── fs-example.js  # File System
+│   │   ├── path-example.js # Path
+│   │   ├── os-example.js  # Operating System
+│   │   ├── http-example.js # HTTP Server
+│   │   └── package.json   # Configuración ES Modules
+│   └── README.md          # Documentación de módulos nativos
 ├── index.js               # Ejemplo básico con globalThis
 └── README.md              # Este archivo
 ```
@@ -115,6 +128,28 @@ node extensiones/mjs-extension/index.mjs
 ```
 
 Ver más detalles en [extensiones/README.md](extensiones/README.md)
+
+### Ejemplos de Módulos Nativos
+
+```bash
+# Módulo File System (fs)
+node modulos-nativos/cjs/fs-example.js
+node modulos-nativos/esm/fs-example.js
+
+# Módulo Path
+node modulos-nativos/cjs/path-example.js
+node modulos-nativos/esm/path-example.js
+
+# Módulo Operating System (os)
+node modulos-nativos/cjs/os-example.js
+node modulos-nativos/esm/os-example.js
+
+# Servidor HTTP (ejecuta en background)
+node modulos-nativos/cjs/http-example.js  # Puerto 3000
+node modulos-nativos/esm/http-example.js  # Puerto 3001
+```
+
+Ver más detalles en [modulos-nativos/README.md](modulos-nativos/README.md)
 
 ## 📚 Conceptos Principales
 
