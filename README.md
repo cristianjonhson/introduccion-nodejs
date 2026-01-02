@@ -205,7 +205,31 @@ import { funcion } from './modulo.js';
 | Extensión archivo | `.js` | `.js` + config o `.mjs` |
 | Compatibilidad | Node.js tradicional | Node.js moderno + navegadores |
 
-## 📖 Recursos Adicionales
+## � Mejores Prácticas
+
+### Prefijo `node:` para Módulos Nativos
+
+Desde **Node.js 16+**, se recomienda usar el prefijo `node:` al importar módulos nativos:
+
+```javascript
+// ✅ Recomendado (Node.js 16+)
+const fs = require('node:fs');
+import fs from 'node:fs';
+
+// ❌ Forma antigua (aún funciona)
+const fs = require('fs');
+import fs from 'fs';
+```
+
+**Ventajas:**
+- Distingue claramente módulos nativos de paquetes de terceros
+- Evita conflictos de nombres
+- Mejora el rendimiento
+- Es el estándar oficial de Node.js
+
+Todos los ejemplos en este repositorio usan esta práctica.
+
+## �📖 Recursos Adicionales
 
 - [Documentación oficial de Node.js](https://nodejs.org/docs/latest/api/)
 - [MDN - JavaScript Modules](https://developer.mozilla.org/es/docs/Web/JavaScript/Guide/Modules)

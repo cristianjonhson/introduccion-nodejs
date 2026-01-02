@@ -34,6 +34,8 @@ Proporciona información sobre el sistema operativo y recursos del sistema.
 - Sistema operativo y arquitectura
 - Información de red y hostname
 - CPU (modelo, núcleos, velocidad)
+- **Detalles por núcleo** (tiempos de user, system, idle y porcentaje de uso)
+- **Resumen de uso promedio** de CPU
 - Memoria (total, libre, usada)
 - Usuario actual
 - Uptime del sistema
