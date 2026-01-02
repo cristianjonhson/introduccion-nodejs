@@ -1,6 +1,6 @@
 // Ejemplo de módulo nativo: HTTP con ES Modules
 
-import http from 'http';
+import http from 'node:http';
 
 console.log('=== Módulo http - ES Modules ===\n');
 

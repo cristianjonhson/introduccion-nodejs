@@ -1,6 +1,6 @@
 // Ejemplo de módulo nativo: OS (Operating System) con ES Modules
 
-import os from 'os';
+import os from 'node:os';
 
 console.log('=== Módulo os (Operating System) - ES Modules ===\n');
 

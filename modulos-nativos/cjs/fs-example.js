@@ -1,7 +1,7 @@
 // Ejemplo de módulo nativo: File System (fs) con CommonJS
 
-const fs = require('fs');
-const path = require('path');
+const fs = require('node:fs');
+const path = require('node:path');
 
 console.log('=== Módulo fs (File System) - CommonJS ===\n');
 

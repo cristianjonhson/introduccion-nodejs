@@ -1,6 +1,6 @@
 // Ejemplo de módulo nativo: Path con CommonJS
 
-const path = require('path');
+const path = require('node:path');
 
 console.log('=== Módulo path - CommonJS ===\n');
 

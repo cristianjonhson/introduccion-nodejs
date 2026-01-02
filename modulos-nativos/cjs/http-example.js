@@ -1,6 +1,6 @@
 // Ejemplo de módulo nativo: HTTP con CommonJS
 
-const http = require('http');
+const http = require('node:http');
 
 console.log('=== Módulo http - CommonJS ===\n');
 

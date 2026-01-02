@@ -1,6 +1,6 @@
 // Ejemplo de módulo nativo: OS (Operating System) con CommonJS
 
-const os = require('os');
+const os = require('node:os');
 
 console.log('=== Módulo os (Operating System) - CommonJS ===\n');
 

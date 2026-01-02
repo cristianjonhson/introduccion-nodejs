@@ -1,6 +1,6 @@
 // Ejemplo de módulo nativo: Uptime con CommonJS
 
-const os = require('os');
+const os = require('node:os');
 
 console.log('=== Sistema Uptime - CommonJS ===\n');
 

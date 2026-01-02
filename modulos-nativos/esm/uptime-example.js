@@ -1,6 +1,6 @@
 // Ejemplo de módulo nativo: Uptime con ES Modules
 
-import os from 'os';
+import os from 'node:os';
 
 console.log('=== Sistema Uptime - ES Modules ===\n');
 

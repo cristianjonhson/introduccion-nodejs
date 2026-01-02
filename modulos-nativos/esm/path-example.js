@@ -1,7 +1,7 @@
 // Ejemplo de módulo nativo: Path con ES Modules
 
-import path from 'path';
-import { fileURLToPath } from 'url';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 // En ES Modules, necesitamos recrear __dirname y __filename
 const __filename = fileURLToPath(import.meta.url);

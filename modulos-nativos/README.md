@@ -131,10 +131,11 @@ node modulos-nativos/esm/http-example.js
 
 ### CommonJS
 ```javascript
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
-const http = require('http');
+// ✅ Buena práctica: usar prefijo node: (desde Node.js 16+)
+const fs = require('node:fs');
+const path = require('node:path');
+const os = require('node:os');
+const http = require('node:http');
 
 // __dirname y __filename disponibles automáticamente
 console.log(__dirname);
@@ -143,15 +144,37 @@ console.log(__filename);
 
 ### ES Modules
 ```javascript
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
-import http from 'http';
-import { fileURLToPath } from 'url';
+// ✅ Buena práctica: usar prefijo node: (desde Node.js 16+)
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
+import http from 'node:http';
+import { fileURLToPath } from 'node:url';
 
 // __dirname y __filename deben recrearse
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+```
+
+### 💡 ¿Por qué usar el prefijo `node:`?
+
+Desde **Node.js 16** se recomienda usar el prefijo `node:` al importar módulos nativos:
+
+**Ventajas:**
+- ✅ **Claridad**: Distingue claramente módulos nativos de paquetes de terceros
+- ✅ **Seguridad**: Evita conflictos si instalas un paquete con el mismo nombre
+- ✅ **Performance**: Mejora ligeramente el rendimiento al evitar búsquedas innecesarias
+- ✅ **Estándar**: Es la práctica recomendada oficial de Node.js
+
+**Ejemplo:**
+```javascript
+// ❌ Forma antigua (aún funciona pero no recomendada)
+const fs = require('fs');
+import fs from 'fs';
+
+// ✅ Forma moderna recomendada (Node.js 16+)
+const fs = require('node:fs');
+import fs from 'node:fs';
 ```
 
 ## 💡 Diferencias Clave

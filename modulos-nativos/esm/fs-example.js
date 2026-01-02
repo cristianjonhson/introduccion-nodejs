@@ -1,8 +1,8 @@
 // Ejemplo de módulo nativo: File System (fs) con ES Modules
 
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 // En ES Modules, necesitamos recrear __dirname
 const __filename = fileURLToPath(import.meta.url);
