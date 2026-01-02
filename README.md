@@ -21,6 +21,14 @@ introduccion-nodejs/
 │   ├── index.js           # Archivo principal que importa módulos ESM
 │   ├── math.js            # Módulo con funciones matemáticas (ESM)
 │   └── package.json       # Configuración para habilitar ES Modules
+├── extensiones/            # Ejemplos con extensiones .cjs y .mjs
+│   ├── cjs-extension/     # Ejemplos con extensión .cjs
+│   │   ├── index.cjs      # Archivo principal CommonJS
+│   │   └── utils.cjs      # Módulo de utilidades
+│   ├── mjs-extension/     # Ejemplos con extensión .mjs
+│   │   ├── index.mjs      # Archivo principal ES Modules
+│   │   └── utils.mjs      # Módulo de utilidades
+│   └── README.md          # Documentación de extensiones
 ├── index.js               # Ejemplo básico con globalThis
 └── README.md              # Este archivo
 ```
@@ -95,6 +103,18 @@ Suma: 5 + 3 = 8
 Resta: 5 - 3 = 2
 Multiplicación: 5 * 3 = 15
 ```
+
+### Ejemplos con Extensiones .cjs y .mjs
+
+```bash
+# CommonJS forzado con .cjs
+node extensiones/cjs-extension/index.cjs
+
+# ES Modules forzado con .mjs
+node extensiones/mjs-extension/index.mjs
+```
+
+Ver más detalles en [extensiones/README.md](extensiones/README.md)
 
 ## 📚 Conceptos Principales
 
