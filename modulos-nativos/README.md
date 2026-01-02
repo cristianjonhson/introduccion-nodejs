@@ -48,6 +48,16 @@ Permite crear servidores HTTP y realizar peticiones HTTP.
 - Manejo de errores 404
 - Configuración de headers
 
+### 5. **uptime** (os + process)
+Muestra información detallada sobre el tiempo de actividad del sistema y procesos.
+
+**Información disponible:**
+- Uptime del sistema en varios formatos
+- Fecha y hora de inicio del sistema
+- Uptime del proceso Node.js
+- Comparación de tiempos
+- Información adicional del sistema
+
 ## 📁 Estructura
 
 ```
@@ -56,8 +66,17 @@ modulos-nativos/
 │   ├── fs-example.js        # File System
 │   ├── path-example.js      # Path
 │   ├── os-example.js        # Operating System
-│   └── http-example.js      # HTTP Server
+│   ├── http-example.js      # HTTP Server
+│   └── uptime-example.js    # Uptime del sistema
 ├── esm/                      # Ejemplos con ES Modules
+│   ├── fs-example.js        # File System
+│   ├── path-example.js      # Path
+│   ├── os-example.js        # Operating System
+│   ├── http-example.js      # HTTP Server
+│   ├── uptime-example.js    # Uptime del sistema
+│   └── package.json         # Habilita ES Modules
+└── README.md                # Este archivo
+```
 │   ├── fs-example.js        # File System
 │   ├── path-example.js      # Path
 │   ├── os-example.js        # Operating System
@@ -80,6 +99,9 @@ node modulos-nativos/cjs/path-example.js
 # Operating System
 node modulos-nativos/cjs/os-example.js
 
+# Uptime del sistema
+node modulos-nativos/cjs/uptime-example.js
+
 # HTTP Server (ejecuta en background)
 node modulos-nativos/cjs/http-example.js
 # Visita: http://localhost:3000
@@ -96,6 +118,9 @@ node modulos-nativos/esm/path-example.js
 
 # Operating System
 node modulos-nativos/esm/os-example.js
+
+# Uptime del sistema
+node modulos-nativos/esm/uptime-example.js
 
 # HTTP Server (ejecuta en background)
 node modulos-nativos/esm/http-example.js
