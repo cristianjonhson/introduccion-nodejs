@@ -65,11 +65,15 @@ async-sync/
 ├── cjs/                              # Ejemplos con CommonJS
 │   ├── sincrono.js                  # Operaciones síncronas
 │   ├── asincrono-callbacks.js       # Operaciones asíncronas con callbacks
-│   └── asincrono-promesas.js        # Operaciones asíncronas con promesas
+│   ├── asincrono-promesas.js        # Operaciones asíncronas con promesas
+│   ├── promisify-example.js         # Ejemplo de util.promisify
+│   └── promisify-custom.js          # Funciones personalizadas con promisify
 ├── esm/                              # Ejemplos con ES Modules
 │   ├── sincrono.js                  # Operaciones síncronas
 │   ├── asincrono-promesas.js        # Operaciones asíncronas (Top-level await)
+│   ├── promisify-example.js         # Ejemplo de util.promisify
 │   └── package.json                 # Configuración ES Modules
+├── CALLBACKS_VS_PROMESAS.md         # Guía completa de callbacks vs promesas
 └── README.md                         # Este archivo
 ```
 
@@ -86,6 +90,12 @@ node modulos-nativos/async-sync/cjs/asincrono-callbacks.js
 
 # Operaciones Asíncronas con Promesas
 node modulos-nativos/async-sync/cjs/asincrono-promesas.js
+
+# util.promisify - Convertir callbacks a promesas
+node modulos-nativos/async-sync/cjs/promisify-example.js
+
+# util.promisify - Funciones personalizadas
+node modulos-nativos/async-sync/cjs/promisify-custom.js
 ```
 
 ### Ejemplos ES Modules
@@ -96,6 +106,9 @@ node modulos-nativos/async-sync/esm/sincrono.js
 
 # Operaciones Asíncronas con Promesas (Top-level await)
 node modulos-nativos/async-sync/esm/asincrono-promesas.js
+
+# util.promisify
+node modulos-nativos/async-sync/esm/promisify-example.js
 ```
 
 ## 🔍 Comparación Detallada
@@ -136,6 +149,68 @@ node modulos-nativos/async-sync/esm/asincrono-promesas.js
 - ✅ El rendimiento y escalabilidad son importantes
 - ✅ Necesitas manejar muchas conexiones simultáneas
 - ✅ Trabajas con archivos grandes o múltiples archivos
+
+## 🔧 util.promisify
+
+`util.promisify` es una utilidad que convierte funciones que usan callbacks (patrón error-first) en funciones que devuelven promesas.
+
+### ¿Por qué usar util.promisify?
+
+- ✅ Convierte APIs antiguas con callbacks a promesas
+- ✅ Permite usar async/await con código legacy
+- ✅ Evita escribir wrappers manualmente
+- ✅ Funciona con cualquier función error-first callback
+
+### Ejemplo Básico
+
+```javascript
+const util = require('node:util');
+const fs = require('node:fs');
+
+// Convertir función con callback a promesa
+const readFile = util.promisify(fs.readFile);
+
+// Ahora puedes usar async/await
+const contenido = await readFile('archivo.txt', 'utf-8');
+console.log(contenido);
+```
+
+### Funciones Personalizadas
+
+```javascript
+// Tu función con callback
+function miOperacion(param, callback) {
+  setTimeout(() => {
+    if (param) {
+      callback(null, 'Éxito');
+    } else {
+      callback(new Error('Error'));
+    }
+  }, 1000);
+}
+
+// Convertir a promesa
+const miOperacionPromise = util.promisify(miOperacion);
+
+// Usar con async/await
+const resultado = await miOperacionPromise(true);
+```
+
+### Alternativa Moderna: fs/promises
+
+Para fs, es preferible usar el módulo integrado `fs/promises`:
+
+```javascript
+// Preferir esto (más moderno)
+import fs from 'node:fs/promises';
+const data = await fs.readFile('file.txt', 'utf-8');
+
+// En lugar de
+import fsCallback from 'node:fs';
+import util from 'node:util';
+const readFile = util.promisify(fsCallback.readFile);
+const data = await readFile('file.txt', 'utf-8');
+```
 
 ## 🎯 Mejores Prácticas
 
