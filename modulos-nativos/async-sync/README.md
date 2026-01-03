@@ -67,13 +67,16 @@ async-sync/
 │   ├── asincrono-callbacks.js       # Operaciones asíncronas con callbacks
 │   ├── asincrono-promesas.js        # Operaciones asíncronas con promesas
 │   ├── promisify-example.js         # Ejemplo de util.promisify
-│   └── promisify-custom.js          # Funciones personalizadas con promisify
+│   ├── promisify-custom.js          # Funciones personalizadas con promisify
+│   └── iife-example.js              # IIFE (Immediately Invoked Function Expression)
 ├── esm/                              # Ejemplos con ES Modules
 │   ├── sincrono.js                  # Operaciones síncronas
 │   ├── asincrono-promesas.js        # Operaciones asíncronas (Top-level await)
 │   ├── promisify-example.js         # Ejemplo de util.promisify
+│   ├── iife-example.js              # IIFE con Top-level await
 │   └── package.json                 # Configuración ES Modules
 ├── CALLBACKS_VS_PROMESAS.md         # Guía completa de callbacks vs promesas
+├── IIFE.md                           # Guía completa de IIFE
 └── README.md                         # Este archivo
 ```
 
@@ -96,6 +99,9 @@ node modulos-nativos/async-sync/cjs/promisify-example.js
 
 # util.promisify - Funciones personalizadas
 node modulos-nativos/async-sync/cjs/promisify-custom.js
+
+# IIFE - Immediately Invoked Function Expression
+node modulos-nativos/async-sync/cjs/iife-example.js
 ```
 
 ### Ejemplos ES Modules
@@ -109,6 +115,9 @@ node modulos-nativos/async-sync/esm/asincrono-promesas.js
 
 # util.promisify
 node modulos-nativos/async-sync/esm/promisify-example.js
+
+# IIFE con Top-level await
+node modulos-nativos/async-sync/esm/iife-example.js
 ```
 
 ## 🔍 Comparación Detallada
