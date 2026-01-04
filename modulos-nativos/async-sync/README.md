@@ -63,19 +63,19 @@ async function leer() {
 ```
 async-sync/
 ├── cjs/                              # Ejemplos con CommonJS
-│   ├── sincrono.js                  # Operaciones síncronas
-│   ├── asincrono-callbacks.js       # Operaciones asíncronas con callbacks
-│   ├── asincrono-promesas.js        # Operaciones asíncronas con promesas
-│   ├── promisify-example.js         # Ejemplo de util.promisify
-│   ├── promisify-custom.js          # Funciones personalizadas con promisify
-│   ├── iife-example.js              # IIFE (Immediately Invoked Function Expression)
-│   └── parallel-example.js          # Ejecución paralela vs secuencial
+│   ├── sincrono.cjs                  # Operaciones síncronas
+│   ├── asincrono-callbacks.cjs       # Operaciones asíncronas con callbacks
+│   ├── asincrono-promesas.cjs        # Operaciones asíncronas con promesas
+│   ├── promisify-example.cjs         # Ejemplo de util.promisify
+│   ├── promisify-custom.cjs          # Funciones personalizadas con promisify
+│   ├── iife-example.cjs              # IIFE (Immediately Invoked Function Expression)
+│   └── parallel-example.cjs          # Ejecución paralela vs secuencial
 ├── esm/                              # Ejemplos con ES Modules
-│   ├── sincrono.js                  # Operaciones síncronas
-│   ├── asincrono-promesas.js        # Operaciones asíncronas (Top-level await)
-│   ├── promisify-example.js         # Ejemplo de util.promisify
-│   ├── iife-example.js              # IIFE con Top-level await
-│   ├── parallel-example.js          # Ejecución paralela con Top-level await
+│   ├── sincrono.mjs                  # Operaciones síncronas
+│   ├── asincrono-promesas.mjs        # Operaciones asíncronas (Top-level await)
+│   ├── promisify-example.mjs         # Ejemplo de util.promisify
+│   ├── iife-example.mjs              # IIFE con Top-level await
+│   ├── parallel-example.mjs          # Ejecución paralela con Top-level await
 │   └── package.json                 # Configuración ES Modules
 ├── CALLBACKS_VS_PROMESAS.md         # Guía completa de callbacks vs promesas
 ├── IIFE.md                           # Guía completa de IIFE
@@ -90,44 +90,44 @@ async-sync/
 
 ```bash
 # Operaciones Síncronas
-node modulos-nativos/async-sync/cjs/sincrono.js
+node modulos-nativos/async-sync/cjs/sincrono.cjs
 
 # Operaciones Asíncronas con Callbacks
-node modulos-nativos/async-sync/cjs/asincrono-callbacks.js
+node modulos-nativos/async-sync/cjs/asincrono-callbacks.cjs
 
 # Operaciones Asíncronas con Promesas
-node modulos-nativos/async-sync/cjs/asincrono-promesas.js
+node modulos-nativos/async-sync/cjs/asincrono-promesas.cjs
 
 # util.promisify - Convertir callbacks a promesas
-node modulos-nativos/async-sync/cjs/promisify-example.js
+node modulos-nativos/async-sync/cjs/promisify-example.cjs
 
 # util.promisify - Funciones personalizadas
-node modulos-nativos/async-sync/cjs/promisify-custom.js
+node modulos-nativos/async-sync/cjs/promisify-custom.cjs
 
 # IIFE - Immediately Invoked Function Expression
-node modulos-nativos/async-sync/cjs/iife-example.js
+node modulos-nativos/async-sync/cjs/iife-example.cjs
 
 # Ejecución Paralela vs Secuencial
-node modulos-nativos/async-sync/cjs/parallel-example.js
+node modulos-nativos/async-sync/cjs/parallel-example.cjs
 ```
 
 ### Ejemplos ES Modules
 
 ```bash
 # Operaciones Síncronas
-node modulos-nativos/async-sync/esm/sincrono.js
+node modulos-nativos/async-sync/esm/sincrono.mjs
 
 # Operaciones Asíncronas con Promesas (Top-level await)
-node modulos-nativos/async-sync/esm/asincrono-promesas.js
+node modulos-nativos/async-sync/esm/asincrono-promesas.mjs
 
 # util.promisify
-node modulos-nativos/async-sync/esm/promisify-example.js
+node modulos-nativos/async-sync/esm/promisify-example.mjs
 
 # IIFE con Top-level await
-node modulos-nativos/async-sync/esm/iife-example.js
+node modulos-nativos/async-sync/esm/iife-example.mjs
 
 # Ejecución Paralela con Top-level await
-node modulos-nativos/async-sync/esm/parallel-example.js
+node modulos-nativos/async-sync/esm/parallel-example.mjs
 ```
 
 ## 🔍 Comparación Detallada
