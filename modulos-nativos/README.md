@@ -60,6 +60,21 @@ Muestra información detallada sobre el tiempo de actividad del sistema y proces
 - Comparación de tiempos
 - Información adicional del sistema
 
+### 6. **process**
+Proporciona información y control sobre el proceso actual de Node.js.
+
+**Información disponible:**
+- PID y PPID del proceso
+- Versión de Node.js y dependencias
+- Plataforma y arquitectura
+- Argumentos de línea de comandos (process.argv)
+- Variables de entorno (process.env)
+- Uso de memoria y CPU
+- Directorio de trabajo (cwd)
+- Eventos del proceso (exit, SIGINT, SIGTERM, etc.)
+- Streams estándar (stdin, stdout, stderr)
+- Manejo de señales del sistema
+
 ## 📁 Estructura
 
 ```
@@ -69,13 +84,15 @@ modulos-nativos/
 │   ├── path-example.js      # Path
 │   ├── os-example.js        # Operating System
 │   ├── http-example.js      # HTTP Server
-│   └── uptime-example.js    # Uptime del sistema
+│   ├── uptime-example.js    # Uptime del sistema
+│   └── process-example.js   # Process (información y control del proceso)
 ├── esm/                      # Ejemplos con ES Modules
 │   ├── fs-example.js        # File System
 │   ├── path-example.js      # Path
 │   ├── os-example.js        # Operating System
 │   ├── http-example.js      # HTTP Server
 │   ├── uptime-example.js    # Uptime del sistema
+│   ├── process-example.js   # Process
 │   └── package.json         # Habilita ES Modules
 ├── async-sync/               # Ejemplos de patrones asíncronos
 │   ├── cjs/                 # Ejemplos con CommonJS
@@ -125,6 +142,12 @@ node modulos-nativos/cjs/os-example.js
 # Uptime del sistema
 node modulos-nativos/cjs/uptime-example.js
 
+# Process (información y control del proceso)
+node modulos-nativos/cjs/process-example.js
+
+# Probar con argumentos
+node modulos-nativos/cjs/process-example.js --name Juan --age 25 --verbose
+
 # HTTP Server (ejecuta en background)
 node modulos-nativos/cjs/http-example.js
 # Visita: http://localhost:3000
@@ -171,6 +194,9 @@ node modulos-nativos/esm/os-example.js
 
 # Uptime del sistema
 node modulos-nativos/esm/uptime-example.js
+
+# Process (información y control del proceso)
+node modulos-nativos/esm/process-example.js
 
 # HTTP Server (ejecuta en background)
 node modulos-nativos/esm/http-example.js

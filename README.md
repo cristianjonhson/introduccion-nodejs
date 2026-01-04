@@ -35,13 +35,15 @@ introduccion-nodejs/
 │   │   ├── path-example.js # Path
 │   │   ├── os-example.js  # Operating System
 │   │   ├── http-example.js # HTTP Server
-│   │   └── uptime-example.js # Uptime del sistema
+│   │   ├── uptime-example.js # Uptime del sistema
+│   │   └── process-example.js # Process (info y control)
 │   ├── esm/               # Módulos nativos con ES Modules
 │   │   ├── fs-example.js  # File System
 │   │   ├── path-example.js # Path
 │   │   ├── os-example.js  # Operating System
 │   │   ├── http-example.js # HTTP Server
 │   │   ├── uptime-example.js # Uptime del sistema
+│   │   ├── process-example.js # Process
 │   │   └── package.json   # Configuración ES Modules
 │   ├── async-sync/        # Patrones asíncronos y Event Loop
 │   │   ├── cjs/          # Ejemplos con CommonJS
@@ -166,6 +168,17 @@ node modulos-nativos/esm/path-example.js
 # Módulo Operating System (os)
 node modulos-nativos/cjs/os-example.js
 node modulos-nativos/esm/os-example.js
+
+# Uptime del sistema
+node modulos-nativos/cjs/uptime-example.js
+node modulos-nativos/esm/uptime-example.js
+
+# Process (información y control del proceso)
+node modulos-nativos/cjs/process-example.js
+node modulos-nativos/esm/process-example.js
+
+# Process con argumentos (probar parser)
+node modulos-nativos/cjs/process-example.js --name Juan --age 25 --verbose
 
 # Servidor HTTP (ejecuta en background)
 node modulos-nativos/cjs/http-example.js  # Puerto 3000
