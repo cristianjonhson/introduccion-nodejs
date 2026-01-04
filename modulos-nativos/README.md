@@ -81,37 +81,37 @@ Proporciona información y control sobre el proceso actual de Node.js.
 ```
 modulos-nativos/
 ├── cjs/                      # Ejemplos con CommonJS
-│   ├── fs-example.js        # File System
-│   ├── ls-example.js        # Listar directorios (comando ls)
-│   ├── path-example.js      # Path
-│   ├── os-example.js        # Operating System
-│   ├── http-example.js      # HTTP Server
-│   ├── uptime-example.js    # Uptime del sistema
-│   └── process-example.js   # Process (información y control del proceso)
+│   ├── fs-example.cjs        # File System
+│   ├── ls-example.cjs        # Listar directorios (comando ls)
+│   ├── path-example.cjs      # Path
+│   ├── os-example.cjs        # Operating System
+│   ├── http-example.cjs      # HTTP Server
+│   ├── uptime-example.cjs    # Uptime del sistema
+│   └── process-example.cjs   # Process (información y control del proceso)
 ├── esm/                      # Ejemplos con ES Modules
-│   ├── fs-example.js        # File System
-│   ├── ls-example.js        # Listar directorios (comando ls)
-│   ├── path-example.js      # Path
-│   ├── os-example.js        # Operating System
-│   ├── http-example.js      # HTTP Server
-│   ├── uptime-example.js    # Uptime del sistema
-│   ├── process-example.js   # Process
+│   ├── fs-example.mjs        # File System
+│   ├── ls-example.mjs        # Listar directorios (comando ls)
+│   ├── path-example.mjs      # Path
+│   ├── os-example.mjs        # Operating System
+│   ├── http-example.mjs      # HTTP Server
+│   ├── uptime-example.mjs    # Uptime del sistema
+│   ├── process-example.mjs   # Process
 │   └── package.json         # Habilita ES Modules
 ├── async-sync/               # Ejemplos de patrones asíncronos
 │   ├── cjs/                 # Ejemplos con CommonJS
-│   │   ├── sincrono.js              # Operaciones síncronas (bloqueantes)
-│   │   ├── asincrono-callbacks.js   # Operaciones asíncronas con callbacks
-│   │   ├── asincrono-promesas.js    # Operaciones asíncronas con promesas
-│   │   ├── promisify-example.js     # util.promisify básico
-│   │   ├── promisify-custom.js      # util.promisify con funciones personalizadas
-│   │   ├── iife-example.js          # IIFE (Immediately Invoked Function Expression)
-│   │   └── parallel-example.js      # Ejecución paralela vs secuencial
+│   │   ├── sincrono.cjs              # Operaciones síncronas (bloqueantes)
+│   │   ├── asincrono-callbacks.cjs   # Operaciones asíncronas con callbacks
+│   │   ├── asincrono-promesas.cjs    # Operaciones asíncronas con promesas
+│   │   ├── promisify-example.cjs     # util.promisify básico
+│   │   ├── promisify-custom.cjs      # util.promisify con funciones personalizadas
+│   │   ├── iife-example.cjs          # IIFE (Immediately Invoked Function Expression)
+│   │   └── parallel-example.cjs      # Ejecución paralela vs secuencial
 │   ├── esm/                 # Ejemplos con ES Modules
-│   │   ├── sincrono.js              # Operaciones síncronas
-│   │   ├── asincrono-promesas.js    # Operaciones asíncronas con Top-level await
-│   │   ├── promisify-example.js     # util.promisify con ESM
-│   │   ├── iife-example.js          # IIFE con Top-level await
-│   │   ├── parallel-example.js      # Ejecución paralela con Top-level await
+   │   ├── sincrono.mjs              # Operaciones síncronas
+   │   ├── asincrono-promesas.mjs    # Operaciones asíncronas con Top-level await
+   │   ├── promisify-example.mjs     # util.promisify con ESM
+   │   ├── iife-example.mjs          # IIFE con Top-level await
+   │   ├── parallel-example.mjs      # Ejecución paralela con Top-level await
 │   │   └── package.json             # Configuración ES Modules
 │   ├── CALLBACKS_VS_PROMESAS.md     # Guía completa de callbacks vs promesas
 │   ├── IIFE.md                      # Guía completa de IIFE
@@ -134,28 +134,28 @@ modulos-nativos/
 
 ```bash
 # File System
-node modulos-nativos/cjs/fs-example.js
+node modulos-nativos/cjs/fs-example.cjs
 
 # Listar directorios (comando ls)
-node modulos-nativos/cjs/ls-example.js
+node modulos-nativos/cjs/ls-example.cjs
 
 # Path
-node modulos-nativos/cjs/path-example.js
+node modulos-nativos/cjs/path-example.cjs
 
 # Operating System
-node modulos-nativos/cjs/os-example.js
+node modulos-nativos/cjs/os-example.cjs
 
 # Uptime del sistema
-node modulos-nativos/cjs/uptime-example.js
+node modulos-nativos/cjs/uptime-example.cjs
 
 # Process (información y control del proceso)
-node modulos-nativos/cjs/process-example.js
+node modulos-nativos/cjs/process-example.cjs
 
 # Probar con argumentos
-node modulos-nativos/cjs/process-example.js --name Juan --age 25 --verbose
+node modulos-nativos/cjs/process-example.cjs --name Juan --age 25 --verbose
 
 # HTTP Server (ejecuta en background)
-node modulos-nativos/cjs/http-example.js
+node modulos-nativos/cjs/http-example.cjs
 # Visita: http://localhost:3000
 ```
 
@@ -163,19 +163,19 @@ node modulos-nativos/cjs/http-example.js
 
 ```bash
 # Operaciones síncronas vs asíncronas
-node modulos-nativos/async-sync/cjs/sincrono.js
-node modulos-nativos/async-sync/cjs/asincrono-callbacks.js
-node modulos-nativos/async-sync/cjs/asincrono-promesas.js
+node modulos-nativos/async-sync/cjs/sincrono.cjs
+node modulos-nativos/async-sync/cjs/asincrono-callbacks.cjs
+node modulos-nativos/async-sync/cjs/asincrono-promesas.cjs
 
 # util.promisify (convertir callbacks a promesas)
-node modulos-nativos/async-sync/cjs/promisify-example.js
-node modulos-nativos/async-sync/cjs/promisify-custom.js
+node modulos-nativos/async-sync/cjs/promisify-example.cjs
+node modulos-nativos/async-sync/cjs/promisify-custom.cjs
 
 # IIFE (Immediately Invoked Function Expression)
-node modulos-nativos/async-sync/cjs/iife-example.js
+node modulos-nativos/async-sync/cjs/iife-example.cjs
 
 # Ejecución Paralela (Promise.all, allSettled, race, any)
-node modulos-nativos/async-sync/cjs/parallel-example.js
+node modulos-nativos/async-sync/cjs/parallel-example.cjs
 ```
 
 Ver documentación detallada en [async-sync/README.md](async-sync/README.md)
@@ -190,25 +190,25 @@ Ver documentación detallada en [async-sync/README.md](async-sync/README.md)
 
 ```bash
 # File System
-node modulos-nativos/esm/fs-example.js
+node modulos-nativos/esm/fs-example.mjs
 
 # Listar directorios (comando ls)
-node modulos-nativos/esm/ls-example.js
+node modulos-nativos/esm/ls-example.mjs
 
 # Path
-node modulos-nativos/esm/path-example.js
+node modulos-nativos/esm/path-example.mjs
 
 # Operating System
-node modulos-nativos/esm/os-example.js
+node modulos-nativos/esm/os-example.mjs
 
 # Uptime del sistema
-node modulos-nativos/esm/uptime-example.js
+node modulos-nativos/esm/uptime-example.mjs
 
 # Process (información y control del proceso)
-node modulos-nativos/esm/process-example.js
+node modulos-nativos/esm/process-example.mjs
 
 # HTTP Server (ejecuta en background)
-node modulos-nativos/esm/http-example.js
+node modulos-nativos/esm/http-example.mjs
 # Visita: http://localhost:3001
 ```
 
@@ -216,17 +216,17 @@ node modulos-nativos/esm/http-example.js
 
 ```bash
 # Operaciones síncronas vs asíncronas
-node modulos-nativos/async-sync/esm/sincrono.js
-node modulos-nativos/async-sync/esm/asincrono-promesas.js
+node modulos-nativos/async-sync/esm/sincrono.mjs
+node modulos-nativos/async-sync/esm/asincrono-promesas.mjs
 
 # util.promisify con Top-level await
-node modulos-nativos/async-sync/esm/promisify-example.js
+node modulos-nativos/async-sync/esm/promisify-example.mjs
 
 # IIFE con Top-level await
-node modulos-nativos/async-sync/esm/iife-example.js
+node modulos-nativos/async-sync/esm/iife-example.mjs
 
 # Ejecución Paralela con Top-level await
-node modulos-nativos/async-sync/esm/parallel-example.js
+node modulos-nativos/async-sync/esm/parallel-example.mjs
 ```
 
 ## 🔍 Diferencias en la Importación

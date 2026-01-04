@@ -15,11 +15,11 @@ Este repositorio contiene ejemplos prácticos y código de referencia para apren
 ```
 introduccion-nodejs/
 ├── cjs/                    # Ejemplos de CommonJS
-│   ├── index.js           # Archivo principal que importa módulos CJS
-│   └── math.js            # Módulo con funciones matemáticas (CJS)
+│   ├── index.cjs          # Archivo principal que importa módulos CJS
+│   └── math.cjs           # Módulo con funciones matemáticas (CJS)
 ├── esm/                    # Ejemplos de ES Modules
-│   ├── index.js           # Archivo principal que importa módulos ESM
-│   ├── math.js            # Módulo con funciones matemáticas (ESM)
+│   ├── index.mjs          # Archivo principal que importa módulos ESM
+│   ├── math.mjs           # Módulo con funciones matemáticas (ESM)
 │   └── package.json       # Configuración para habilitar ES Modules
 ├── extensiones/            # Ejemplos con extensiones .cjs y .mjs
 │   ├── cjs-extension/     # Ejemplos con extensión .cjs
@@ -31,37 +31,37 @@ introduccion-nodejs/
 │   └── README.md          # Documentación de extensiones
 ├── modulos-nativos/        # Ejemplos de módulos nativos de Node.js
 │   ├── cjs/               # Módulos nativos con CommonJS
-│   │   ├── fs-example.js  # File System
-│   │   ├── ls-example.js  # Listar directorios (comando ls)
-│   │   ├── path-example.js # Path
-│   │   ├── os-example.js  # Operating System
-│   │   ├── http-example.js # HTTP Server
-│   │   ├── uptime-example.js # Uptime del sistema
-│   │   └── process-example.js # Process (info y control)
+│   │   ├── fs-example.cjs  # File System
+│   │   ├── ls-example.cjs  # Listar directorios (comando ls)
+│   │   ├── path-example.cjs # Path
+│   │   ├── os-example.cjs  # Operating System
+│   │   ├── http-example.cjs # HTTP Server
+│   │   ├── uptime-example.cjs # Uptime del sistema
+│   │   └── process-example.cjs # Process (info y control)
 │   ├── esm/               # Módulos nativos con ES Modules
-│   │   ├── fs-example.js  # File System
-│   │   ├── ls-example.js  # Listar directorios (comando ls)
-│   │   ├── path-example.js # Path
-│   │   ├── os-example.js  # Operating System
-│   │   ├── http-example.js # HTTP Server
-│   │   ├── uptime-example.js # Uptime del sistema
-│   │   ├── process-example.js # Process
+│   │   ├── fs-example.mjs  # File System
+│   │   ├── ls-example.mjs  # Listar directorios (comando ls)
+│   │   ├── path-example.mjs # Path
+│   │   ├── os-example.mjs  # Operating System
+│   │   ├── http-example.mjs # HTTP Server
+│   │   ├── uptime-example.mjs # Uptime del sistema
+│   │   ├── process-example.mjs # Process
 │   │   └── package.json   # Configuración ES Modules
 │   ├── async-sync/        # Patrones asíncronos y Event Loop
 │   │   ├── cjs/          # Ejemplos con CommonJS
-│   │   │   ├── sincrono.js              # Operaciones síncronas
-│   │   │   ├── asincrono-callbacks.js   # Callbacks
-│   │   │   ├── asincrono-promesas.js    # Promesas y async/await
-│   │   │   ├── promisify-example.js     # util.promisify
-│   │   │   ├── promisify-custom.js      # Funciones personalizadas
-│   │   │   ├── iife-example.js          # IIFE
-│   │   │   └── parallel-example.js      # Ejecución paralela
+│   │   │   ├── sincrono.cjs              # Operaciones síncronas
+│   │   │   ├── asincrono-callbacks.cjs   # Callbacks
+│   │   │   ├── asincrono-promesas.cjs    # Promesas y async/await
+│   │   │   ├── promisify-example.cjs     # util.promisify
+│   │   │   ├── promisify-custom.cjs      # Funciones personalizadas
+│   │   │   ├── iife-example.cjs          # IIFE
+│   │   │   └── parallel-example.cjs      # Ejecución paralela
 │   │   ├── esm/          # Ejemplos con ES Modules
-│   │   │   ├── sincrono.js
-│   │   │   ├── asincrono-promesas.js
-│   │   │   ├── promisify-example.js
-│   │   │   ├── iife-example.js
-│   │   │   ├── parallel-example.js
+│   │   │   ├── sincrono.mjs
+│   │   │   ├── asincrono-promesas.mjs
+│   │   │   ├── promisify-example.mjs
+│   │   │   ├── iife-example.mjs
+│   │   │   ├── parallel-example.mjs
 │   │   │   └── package.json
 │   │   ├── CALLBACKS_VS_PROMESAS.md # Guía de callbacks vs promesas
 │   │   ├── IIFE.md                   # Guía de IIFE
@@ -119,7 +119,7 @@ Hola, Node.js!
 ### Ejemplo CommonJS (CJS)
 
 ```bash
-node cjs/index.js
+node cjs/index.cjs
 ```
 
 **Salida esperada:**
@@ -133,7 +133,7 @@ Multiplicación: 5 * 3 = 15
 ### Ejemplo ES Modules (ESM)
 
 ```bash
-node esm/index.js
+node esm/index.mjs
 ```
 
 **Salida esperada:**
@@ -160,60 +160,60 @@ Ver más detalles en [extensiones/README.md](extensiones/README.md)
 
 ```bash
 # Módulo File System (fs)
-node modulos-nativos/cjs/fs-example.js
-node modulos-nativos/esm/fs-example.js
+node modulos-nativos/cjs/fs-example.cjs
+node modulos-nativos/esm/fs-example.mjs
 
 # Listar directorios (comando ls)
-node modulos-nativos/cjs/ls-example.js
-node modulos-nativos/esm/ls-example.js
+node modulos-nativos/cjs/ls-example.cjs
+node modulos-nativos/esm/ls-example.mjs
 
 # Módulo Path
-node modulos-nativos/cjs/path-example.js
-node modulos-nativos/esm/path-example.js
+node modulos-nativos/cjs/path-example.cjs
+node modulos-nativos/esm/path-example.mjs
 
 # Módulo Operating System (os)
-node modulos-nativos/cjs/os-example.js
-node modulos-nativos/esm/os-example.js
+node modulos-nativos/cjs/os-example.cjs
+node modulos-nativos/esm/os-example.mjs
 
 # Uptime del sistema
-node modulos-nativos/cjs/uptime-example.js
-node modulos-nativos/esm/uptime-example.js
+node modulos-nativos/cjs/uptime-example.cjs
+node modulos-nativos/esm/uptime-example.mjs
 
 # Process (información y control del proceso)
-node modulos-nativos/cjs/process-example.js
-node modulos-nativos/esm/process-example.js
+node modulos-nativos/cjs/process-example.cjs
+node modulos-nativos/esm/process-example.mjs
 
 # Process con argumentos (probar parser)
-node modulos-nativos/cjs/process-example.js --name Juan --age 25 --verbose
+node modulos-nativos/cjs/process-example.cjs --name Juan --age 25 --verbose
 
 # Servidor HTTP (ejecuta en background)
-node modulos-nativos/cjs/http-example.js  # Puerto 3000
-node modulos-nativos/esm/http-example.js  # Puerto 3001
+node modulos-nativos/cjs/http-example.cjs  # Puerto 3000
+node modulos-nativos/esm/http-example.mjs  # Puerto 3001
 ```
 
 ### Ejemplos de Patrones Asíncronos
 
 ```bash
 # Operaciones Síncronas vs Asíncronas
-node modulos-nativos/async-sync/cjs/sincrono.js
-node modulos-nativos/async-sync/cjs/asincrono-callbacks.js
-node modulos-nativos/async-sync/cjs/asincrono-promesas.js
+node modulos-nativos/async-sync/cjs/sincrono.cjs
+node modulos-nativos/async-sync/cjs/asincrono-callbacks.cjs
+node modulos-nativos/async-sync/cjs/asincrono-promesas.cjs
 
 # util.promisify - Convertir callbacks a promesas
-node modulos-nativos/async-sync/cjs/promisify-example.js
-node modulos-nativos/async-sync/cjs/promisify-custom.js
+node modulos-nativos/async-sync/cjs/promisify-example.cjs
+node modulos-nativos/async-sync/cjs/promisify-custom.cjs
 
 # IIFE - Immediately Invoked Function Expression
-node modulos-nativos/async-sync/cjs/iife-example.js
+node modulos-nativos/async-sync/cjs/iife-example.cjs
 
 # Ejecución Paralela - Promise.all, allSettled, race, any
-node modulos-nativos/async-sync/cjs/parallel-example.js
+node modulos-nativos/async-sync/cjs/parallel-example.cjs
 
 # ES Modules con Top-level await
-node modulos-nativos/async-sync/esm/asincrono-promesas.js
-node modulos-nativos/async-sync/esm/promisify-example.js
-node modulos-nativos/async-sync/esm/iife-example.js
-node modulos-nativos/async-sync/esm/parallel-example.js
+node modulos-nativos/async-sync/esm/asincrono-promesas.mjs
+node modulos-nativos/async-sync/esm/promisify-example.mjs
+node modulos-nativos/async-sync/esm/iife-example.mjs
+node modulos-nativos/async-sync/esm/parallel-example.mjs
 ```
 
 **📚 Guías completas disponibles:**
