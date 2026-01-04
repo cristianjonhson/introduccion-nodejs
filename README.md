@@ -4,6 +4,28 @@
 
 Este repositorio contiene ejemplos prácticos y código de referencia para aprender los conceptos fundamentales de Node.js. El proyecto está diseñado para demostrar las diferencias entre los sistemas de módulos CommonJS (CJS) y ES Modules (ESM), proporcionando ejemplos claros y funcionales de cada uno.
 
+## 🤔 ¿Qué es Node.js?
+
+**Node.js** es un entorno de ejecución de JavaScript del lado del servidor construido sobre el motor V8 de Chrome. Permite ejecutar código JavaScript fuera del navegador, lo que revolucionó el desarrollo web al usar el mismo lenguaje tanto en el frontend como en el backend.
+
+### Características principales:
+
+- **🚀 Asíncrono y basado en eventos**: Usa un modelo de I/O no bloqueante que lo hace ligero y eficiente
+- **⚡ Motor V8**: El mismo motor de JavaScript de Google Chrome, extremadamente rápido
+- **📦 NPM**: El gestor de paquetes más grande del mundo con millones de librerías
+- **🔄 Event Loop**: Maneja operaciones concurrentes sin necesidad de múltiples hilos
+- **🌐 Full-stack JavaScript**: Usa JavaScript tanto en cliente como servidor
+- **📊 Ideal para aplicaciones en tiempo real**: Chat, streaming, APIs REST, microservicios
+
+### ¿Para qué se usa Node.js?
+
+- Servidores web y APIs REST
+- Aplicaciones en tiempo real (WebSockets, chat, notificaciones)
+- Herramientas de línea de comandos (CLI)
+- Automatización de tareas y build tools
+- Aplicaciones de escritorio (con Electron)
+- Microservicios y arquitecturas serverless
+
 ## 🚀 Tecnologías
 
 - **Node.js** v18.20.8 o superior
