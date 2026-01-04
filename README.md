@@ -37,7 +37,8 @@ introduccion-nodejs/
 │   │   ├── os-example.cjs  # Operating System
 │   │   ├── http-example.cjs # HTTP Server
 │   │   ├── uptime-example.cjs # Uptime del sistema
-│   │   └── process-example.cjs # Process (info y control)
+│   │   ├── process-example.cjs # Process (info y control)
+│   │   └── app-completa.cjs # 🌟 Dashboard que integra TODOS los módulos
 │   ├── esm/               # Módulos nativos con ES Modules
 │   │   ├── fs-example.mjs  # File System
 │   │   ├── ls-example.mjs  # Listar directorios (comando ls)
@@ -46,6 +47,7 @@ introduccion-nodejs/
 │   │   ├── http-example.mjs # HTTP Server
 │   │   ├── uptime-example.mjs # Uptime del sistema
 │   │   ├── process-example.mjs # Process
+│   │   ├── app-completa.mjs # 🌟 Dashboard que integra TODOS los módulos
 │   │   └── package.json   # Configuración ES Modules
 │   ├── async-sync/        # Patrones asíncronos y Event Loop
 │   │   ├── cjs/          # Ejemplos con CommonJS
@@ -157,6 +159,35 @@ node extensiones/mjs-extension/index.mjs
 Ver más detalles en [extensiones/README.md](extensiones/README.md)
 
 ### Ejemplos de Módulos Nativos
+
+#### 🌟 Aplicación Completa - Dashboard de Monitoreo
+
+**Integra TODOS los módulos nativos en una sola aplicación web:**
+
+```bash
+# CommonJS - Dashboard en http://localhost:3000/
+node modulos-nativos/cjs/app-completa.cjs
+
+# ES Modules - Dashboard en http://localhost:3001/
+node modulos-nativos/esm/app-completa.mjs
+```
+
+**Módulos integrados:**
+- ✅ **fs** - Sistema de logs de acceso en archivos
+- ✅ **path** - Manejo de rutas y directorios
+- ✅ **os** - Información completa del sistema operativo
+- ✅ **http** - Servidor web con interfaz visual
+- ✅ **process** - Monitoreo del proceso Node.js
+- ✅ **ls/fs** - Listado de archivos del directorio
+
+**Endpoints:**
+- `/` - Dashboard visual interactivo
+- `/api/info` - API JSON con toda la información del sistema
+- `/api/logs` - Últimos 50 registros de acceso
+
+---
+
+#### Ejemplos Individuales
 
 ```bash
 # Módulo File System (fs)

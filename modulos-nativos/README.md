@@ -87,7 +87,8 @@ modulos-nativos/
 │   ├── os-example.cjs        # Operating System
 │   ├── http-example.cjs      # HTTP Server
 │   ├── uptime-example.cjs    # Uptime del sistema
-│   └── process-example.cjs   # Process (información y control del proceso)
+│   ├── process-example.cjs   # Process (información y control del proceso)
+│   └── app-completa.cjs      # 🌟 Aplicación que integra TODOS los módulos
 ├── esm/                      # Ejemplos con ES Modules
 │   ├── fs-example.mjs        # File System
 │   ├── ls-example.mjs        # Listar directorios (comando ls)
@@ -96,6 +97,7 @@ modulos-nativos/
 │   ├── http-example.mjs      # HTTP Server
 │   ├── uptime-example.mjs    # Uptime del sistema
 │   ├── process-example.mjs   # Process
+│   ├── app-completa.mjs      # 🌟 Aplicación que integra TODOS los módulos
 │   └── package.json         # Habilita ES Modules
 ├── async-sync/               # Ejemplos de patrones asíncronos
 │   ├── cjs/                 # Ejemplos con CommonJS
@@ -129,6 +131,33 @@ modulos-nativos/
 ```
 
 ## ▶️ Cómo Ejecutar
+
+### 🌟 Aplicación Completa (Integra TODOS los módulos)
+
+**Dashboard de Monitoreo del Sistema** - Aplicación web que integra todos los módulos nativos en un solo proyecto:
+
+```bash
+# CommonJS (Puerto 3000)
+node modulos-nativos/cjs/app-completa.cjs
+
+# ES Modules (Puerto 3001)
+node modulos-nativos/esm/app-completa.mjs
+```
+
+**Características:**
+- ✅ **fs** - Sistema de logs de acceso
+- ✅ **path** - Manejo de rutas de archivos
+- ✅ **os** - Información del sistema operativo
+- ✅ **http** - Servidor web con dashboard HTML
+- ✅ **process** - Monitoreo del proceso Node.js
+- ✅ **ls** - Listar archivos del directorio actual
+
+**Endpoints disponibles:**
+- `http://localhost:3000/` - Dashboard visual interactivo
+- `http://localhost:3000/api/info` - API JSON con toda la información
+- `http://localhost:3000/api/logs` - Últimos 50 logs de acceso
+
+---
 
 ### Ejemplos CommonJS
 
