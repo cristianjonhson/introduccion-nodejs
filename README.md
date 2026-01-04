@@ -34,13 +34,36 @@ introduccion-nodejs/
 │   │   ├── fs-example.js  # File System
 │   │   ├── path-example.js # Path
 │   │   ├── os-example.js  # Operating System
-│   │   └── http-example.js # HTTP Server
+│   │   ├── http-example.js # HTTP Server
+│   │   └── uptime-example.js # Uptime del sistema
 │   ├── esm/               # Módulos nativos con ES Modules
 │   │   ├── fs-example.js  # File System
 │   │   ├── path-example.js # Path
 │   │   ├── os-example.js  # Operating System
 │   │   ├── http-example.js # HTTP Server
+│   │   ├── uptime-example.js # Uptime del sistema
 │   │   └── package.json   # Configuración ES Modules
+│   ├── async-sync/        # Patrones asíncronos y Event Loop
+│   │   ├── cjs/          # Ejemplos con CommonJS
+│   │   │   ├── sincrono.js              # Operaciones síncronas
+│   │   │   ├── asincrono-callbacks.js   # Callbacks
+│   │   │   ├── asincrono-promesas.js    # Promesas y async/await
+│   │   │   ├── promisify-example.js     # util.promisify
+│   │   │   ├── promisify-custom.js      # Funciones personalizadas
+│   │   │   ├── iife-example.js          # IIFE
+│   │   │   └── parallel-example.js      # Ejecución paralela
+│   │   ├── esm/          # Ejemplos con ES Modules
+│   │   │   ├── sincrono.js
+│   │   │   ├── asincrono-promesas.js
+│   │   │   ├── promisify-example.js
+│   │   │   ├── iife-example.js
+│   │   │   ├── parallel-example.js
+│   │   │   └── package.json
+│   │   ├── CALLBACKS_VS_PROMESAS.md # Guía de callbacks vs promesas
+│   │   ├── IIFE.md                   # Guía de IIFE
+│   │   ├── PARALLEL.md               # Guía de ejecución paralela
+│   │   ├── INTERNALS.md              # Event Loop y Thread Pool
+│   │   └── README.md                 # Documentación de async-sync
 │   └── README.md          # Documentación de módulos nativos
 ├── index.js               # Ejemplo básico con globalThis
 └── README.md              # Este archivo
@@ -149,6 +172,38 @@ node modulos-nativos/cjs/http-example.js  # Puerto 3000
 node modulos-nativos/esm/http-example.js  # Puerto 3001
 ```
 
+### Ejemplos de Patrones Asíncronos
+
+```bash
+# Operaciones Síncronas vs Asíncronas
+node modulos-nativos/async-sync/cjs/sincrono.js
+node modulos-nativos/async-sync/cjs/asincrono-callbacks.js
+node modulos-nativos/async-sync/cjs/asincrono-promesas.js
+
+# util.promisify - Convertir callbacks a promesas
+node modulos-nativos/async-sync/cjs/promisify-example.js
+node modulos-nativos/async-sync/cjs/promisify-custom.js
+
+# IIFE - Immediately Invoked Function Expression
+node modulos-nativos/async-sync/cjs/iife-example.js
+
+# Ejecución Paralela - Promise.all, allSettled, race, any
+node modulos-nativos/async-sync/cjs/parallel-example.js
+
+# ES Modules con Top-level await
+node modulos-nativos/async-sync/esm/asincrono-promesas.js
+node modulos-nativos/async-sync/esm/promisify-example.js
+node modulos-nativos/async-sync/esm/iife-example.js
+node modulos-nativos/async-sync/esm/parallel-example.js
+```
+
+**📚 Guías completas disponibles:**
+- [async-sync/README.md](modulos-nativos/async-sync/README.md) - Introducción a patrones asíncronos
+- [CALLBACKS_VS_PROMESAS.md](modulos-nativos/async-sync/CALLBACKS_VS_PROMESAS.md) - Callbacks vs Promesas detallado
+- [IIFE.md](modulos-nativos/async-sync/IIFE.md) - Guía completa de IIFE
+- [PARALLEL.md](modulos-nativos/async-sync/PARALLEL.md) - Ejecución paralela con Promise methods
+- [INTERNALS.md](modulos-nativos/async-sync/INTERNALS.md) - Event Loop, Thread Pool y arquitectura de Node.js
+
 Ver más detalles en [modulos-nativos/README.md](modulos-nativos/README.md)
 
 ## 📚 Conceptos Principales
@@ -177,6 +232,7 @@ const { funcion } = require('./modulo');
 - Usa `export` para exportar
 - Carga **asíncrona** de módulos
 - Requiere `"type": "module"` en `package.json` o extensión `.mjs`
+- Soporta **Top-level await** (await sin función async)
 
 **Ejemplo:**
 ```javascript
@@ -185,7 +241,53 @@ export function funcion() { }
 
 // Importar
 import { funcion } from './modulo.js';
+
+// Top-level await (solo en ES Modules)
+const data = await fetch('https://api.example.com');
 ```
+
+### Patrones Asíncronos en Node.js
+
+Node.js utiliza un modelo de **I/O no bloqueante** basado en el **Event Loop**:
+
+#### **1. Código Síncrono (Bloqueante)**
+```javascript
+const data = fs.readFileSync('file.txt'); // ❌ Bloquea el Event Loop
+```
+
+#### **2. Callbacks (Asíncrono tradicional)**
+```javascript
+fs.readFile('file.txt', (err, data) => {
+  if (err) throw err;
+  console.log(data);
+});
+```
+
+#### **3. Promesas y async/await (Asíncrono moderno)**
+```javascript
+// Secuencial
+const data = await fs.promises.readFile('file.txt');
+
+// Paralelo (3x más rápido para operaciones independientes)
+const [data1, data2, data3] = await Promise.all([
+  readFile1(),
+  readFile2(),
+  readFile3()
+]);
+```
+
+#### **4. IIFE (Immediately Invoked Function Expression)**
+```javascript
+(function() {
+  console.log('Se ejecuta inmediatamente');
+})();
+```
+
+**📖 Para entender cómo funciona Node.js internamente:**
+- Event Loop y Thread Pool → [INTERNALS.md](modulos-nativos/async-sync/INTERNALS.md)
+- Callbacks vs Promesas → [CALLBACKS_VS_PROMESAS.md](modulos-nativos/async-sync/CALLBACKS_VS_PROMESAS.md)
+- Ejecución Paralela → [PARALLEL.md](modulos-nativos/async-sync/PARALLEL.md)
+- IIFE → [IIFE.md](modulos-nativos/async-sync/IIFE.md)
 
 ### globalThis
 
@@ -204,6 +306,32 @@ import { funcion } from './modulo.js';
 | Scope | Dinámico | Estático |
 | Extensión archivo | `.js` | `.js` + config o `.mjs` |
 | Compatibilidad | Node.js tradicional | Node.js moderno + navegadores |
+| Top-level await | ❌ No | ✅ Sí |
+
+## ⚡ Patrones de Ejecución
+
+| Patrón | Velocidad | Bloquea Event Loop | Cuándo usar |
+|--------|-----------|-------------------|-------------|
+| **Síncrono** | 🐌 Lento | ❌ Sí (malo) | Solo scripts de inicialización |
+| **Callbacks** | 🚀 Rápido | ✅ No | Legacy code, APIs antiguas |
+| **Secuencial (await)** | 🐢 Moderado | ✅ No | Operaciones con dependencias |
+| **Paralelo (Promise.all)** | 🚀🚀 Muy rápido | ✅ No | Operaciones independientes |
+
+### Ejemplo de Mejora de Performance
+
+```javascript
+// ❌ Secuencial: 3 segundos
+const user = await getUser();
+const posts = await getPosts();
+const comments = await getComments();
+
+// ✅ Paralelo: 1 segundo (3x más rápido)
+const [user, posts, comments] = await Promise.all([
+  getUser(),
+  getPosts(),
+  getComments()
+]);
+```
 
 ## � Mejores Prácticas
 

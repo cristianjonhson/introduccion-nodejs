@@ -77,6 +77,27 @@ modulos-nativos/
 │   ├── http-example.js      # HTTP Server
 │   ├── uptime-example.js    # Uptime del sistema
 │   └── package.json         # Habilita ES Modules
+├── async-sync/               # Ejemplos de patrones asíncronos
+│   ├── cjs/                 # Ejemplos con CommonJS
+│   │   ├── sincrono.js              # Operaciones síncronas (bloqueantes)
+│   │   ├── asincrono-callbacks.js   # Operaciones asíncronas con callbacks
+│   │   ├── asincrono-promesas.js    # Operaciones asíncronas con promesas
+│   │   ├── promisify-example.js     # util.promisify básico
+│   │   ├── promisify-custom.js      # util.promisify con funciones personalizadas
+│   │   ├── iife-example.js          # IIFE (Immediately Invoked Function Expression)
+│   │   └── parallel-example.js      # Ejecución paralela vs secuencial
+│   ├── esm/                 # Ejemplos con ES Modules
+│   │   ├── sincrono.js              # Operaciones síncronas
+│   │   ├── asincrono-promesas.js    # Operaciones asíncronas con Top-level await
+│   │   ├── promisify-example.js     # util.promisify con ESM
+│   │   ├── iife-example.js          # IIFE con Top-level await
+│   │   ├── parallel-example.js      # Ejecución paralela con Top-level await
+│   │   └── package.json             # Configuración ES Modules
+│   ├── CALLBACKS_VS_PROMESAS.md     # Guía completa de callbacks vs promesas
+│   ├── IIFE.md                      # Guía completa de IIFE
+│   ├── PARALLEL.md                  # Guía completa de ejecución paralela
+│   ├── INTERNALS.md                 # Cómo funciona Node.js por dentro
+│   └── README.md                    # Documentación de patrones asíncronos
 └── README.md                # Este archivo
 ```
 │   ├── fs-example.js        # File System
@@ -109,6 +130,33 @@ node modulos-nativos/cjs/http-example.js
 # Visita: http://localhost:3000
 ```
 
+### Ejemplos de Patrones Asíncronos
+
+```bash
+# Operaciones síncronas vs asíncronas
+node modulos-nativos/async-sync/cjs/sincrono.js
+node modulos-nativos/async-sync/cjs/asincrono-callbacks.js
+node modulos-nativos/async-sync/cjs/asincrono-promesas.js
+
+# util.promisify (convertir callbacks a promesas)
+node modulos-nativos/async-sync/cjs/promisify-example.js
+node modulos-nativos/async-sync/cjs/promisify-custom.js
+
+# IIFE (Immediately Invoked Function Expression)
+node modulos-nativos/async-sync/cjs/iife-example.js
+
+# Ejecución Paralela (Promise.all, allSettled, race, any)
+node modulos-nativos/async-sync/cjs/parallel-example.js
+```
+
+Ver documentación detallada en [async-sync/README.md](async-sync/README.md)
+
+**Guías completas disponibles:**
+- [CALLBACKS_VS_PROMESAS.md](async-sync/CALLBACKS_VS_PROMESAS.md) - Diferencias entre callbacks y promesas
+- [IIFE.md](async-sync/IIFE.md) - Guía completa de IIFE
+- [PARALLEL.md](async-sync/PARALLEL.md) - Ejecución paralela con Promise.all, allSettled, race, any
+- [INTERNALS.md](async-sync/INTERNALS.md) - Cómo funciona Node.js por dentro (Event Loop, Thread Pool)
+
 ### Ejemplos ES Modules
 
 ```bash
@@ -127,6 +175,23 @@ node modulos-nativos/esm/uptime-example.js
 # HTTP Server (ejecuta en background)
 node modulos-nativos/esm/http-example.js
 # Visita: http://localhost:3001
+```
+
+### Ejemplos de Patrones Asíncronos (ES Modules)
+
+```bash
+# Operaciones síncronas vs asíncronas
+node modulos-nativos/async-sync/esm/sincrono.js
+node modulos-nativos/async-sync/esm/asincrono-promesas.js
+
+# util.promisify con Top-level await
+node modulos-nativos/async-sync/esm/promisify-example.js
+
+# IIFE con Top-level await
+node modulos-nativos/async-sync/esm/iife-example.js
+
+# Ejecución Paralela con Top-level await
+node modulos-nativos/async-sync/esm/parallel-example.js
 ```
 
 ## 🔍 Diferencias en la Importación
