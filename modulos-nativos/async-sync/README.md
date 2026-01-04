@@ -80,6 +80,7 @@ async-sync/
 ├── CALLBACKS_VS_PROMESAS.md         # Guía completa de callbacks vs promesas
 ├── IIFE.md                           # Guía completa de IIFE
 ├── PARALLEL.md                       # Guía completa de ejecución paralela
+├── INTERNALS.md                      # Cómo funciona Node.js por dentro (Event Loop, Thread Pool)
 └── README.md                         # Este archivo
 ```
 
