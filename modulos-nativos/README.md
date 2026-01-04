@@ -16,6 +16,7 @@ Permite trabajar con el sistema de archivos: crear, leer, escribir y eliminar ar
 - Agregar contenido
 - Obtener información de archivos
 - Eliminar archivos y directorios
+- **Listar directorios** (comando ls): readdirSync(), statSync(), filtrar, ordenar, recursivo
 
 ### 2. **path**
 Utilidades para trabajar con rutas de archivos y directorios de forma independiente del sistema operativo.
@@ -81,6 +82,7 @@ Proporciona información y control sobre el proceso actual de Node.js.
 modulos-nativos/
 ├── cjs/                      # Ejemplos con CommonJS
 │   ├── fs-example.js        # File System
+│   ├── ls-example.js        # Listar directorios (comando ls)
 │   ├── path-example.js      # Path
 │   ├── os-example.js        # Operating System
 │   ├── http-example.js      # HTTP Server
@@ -88,6 +90,7 @@ modulos-nativos/
 │   └── process-example.js   # Process (información y control del proceso)
 ├── esm/                      # Ejemplos con ES Modules
 │   ├── fs-example.js        # File System
+│   ├── ls-example.js        # Listar directorios (comando ls)
 │   ├── path-example.js      # Path
 │   ├── os-example.js        # Operating System
 │   ├── http-example.js      # HTTP Server
@@ -132,6 +135,9 @@ modulos-nativos/
 ```bash
 # File System
 node modulos-nativos/cjs/fs-example.js
+
+# Listar directorios (comando ls)
+node modulos-nativos/cjs/ls-example.js
 
 # Path
 node modulos-nativos/cjs/path-example.js
@@ -185,6 +191,9 @@ Ver documentación detallada en [async-sync/README.md](async-sync/README.md)
 ```bash
 # File System
 node modulos-nativos/esm/fs-example.js
+
+# Listar directorios (comando ls)
+node modulos-nativos/esm/ls-example.js
 
 # Path
 node modulos-nativos/esm/path-example.js

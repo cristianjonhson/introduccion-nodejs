@@ -32,6 +32,7 @@ introduccion-nodejs/
 ├── modulos-nativos/        # Ejemplos de módulos nativos de Node.js
 │   ├── cjs/               # Módulos nativos con CommonJS
 │   │   ├── fs-example.js  # File System
+│   │   ├── ls-example.js  # Listar directorios (comando ls)
 │   │   ├── path-example.js # Path
 │   │   ├── os-example.js  # Operating System
 │   │   ├── http-example.js # HTTP Server
@@ -39,6 +40,7 @@ introduccion-nodejs/
 │   │   └── process-example.js # Process (info y control)
 │   ├── esm/               # Módulos nativos con ES Modules
 │   │   ├── fs-example.js  # File System
+│   │   ├── ls-example.js  # Listar directorios (comando ls)
 │   │   ├── path-example.js # Path
 │   │   ├── os-example.js  # Operating System
 │   │   ├── http-example.js # HTTP Server
@@ -160,6 +162,10 @@ Ver más detalles en [extensiones/README.md](extensiones/README.md)
 # Módulo File System (fs)
 node modulos-nativos/cjs/fs-example.js
 node modulos-nativos/esm/fs-example.js
+
+# Listar directorios (comando ls)
+node modulos-nativos/cjs/ls-example.js
+node modulos-nativos/esm/ls-example.js
 
 # Módulo Path
 node modulos-nativos/cjs/path-example.js
