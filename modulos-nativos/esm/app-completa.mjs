@@ -7,6 +7,7 @@ import path from 'node:path';
 import os from 'node:os';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
+import { execSync } from 'node:child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -51,12 +52,66 @@ function obtenerUltimosLogs(limite = 10) {
   }
 }
 
-// 4. Obtener información del sistema usando OS
+// 4. Obtener procesos con mayor consumo de memoria
+function obtenerTopProcesosMemoria() {
+  try {
+    let comando;
+    const plataforma = os.platform();
+    
+    if (plataforma === 'darwin') {
+      // macOS: usar ps sin --sort (BSD version)
+      comando = "ps aux | sort -nrk 4 | head -n 5";
+    } else if (plataforma === 'linux') {
+      // Linux: usar ps con --sort
+      comando = "ps aux --sort=-%mem | head -n 6 | tail -n 5";
+    } else if (plataforma === 'win32') {
+      // Windows: usar tasklist ordenado por memoria
+      comando = 'powershell "Get-Process | Sort-Object WS -Descending | Select-Object -First 5 Name,WS | Format-Table -AutoSize"';
+    } else {
+      return [];
+    }
+    
+    const output = execSync(comando, { encoding: 'utf-8', timeout: 2000 });
+    const lineas = output.trim().split('\n').filter(l => l.trim());
+    const procesos = [];
+    
+    if (plataforma === 'win32') {
+      // Parsear salida de Windows
+      for (let i = 2; i < lineas.length && i < 7; i++) {
+        const partes = lineas[i].trim().split(/\s+/);
+        if (partes.length >= 2) {
+          const nombre = partes[0];
+          const memoria = (parseInt(partes[1]) / 1024 / 1024).toFixed(2);
+          procesos.push({ nombre, memoria: memoria + ' MB' });
+        }
+      }
+    } else {
+      // Parsear salida de macOS/Linux (ps aux)
+      lineas.forEach(linea => {
+        const partes = linea.trim().split(/\s+/);
+        if (partes.length >= 11) {
+          const nombre = partes[10].split('/').pop(); // Nombre del proceso
+          const memPorcentaje = partes[3]; // %MEM
+          const rss = parseInt(partes[5]); // RSS en KB
+          const memoriaMB = (rss / 1024).toFixed(2);
+          procesos.push({ nombre, memoria: memoriaMB + ' MB', porcentaje: memPorcentaje + '%' });
+        }
+      });
+    }
+    
+    return procesos.slice(0, 5);
+  } catch (error) {
+    return [];
+  }
+}
+
+// 5. Obtener información del sistema usando OS
 function obtenerInfoSistema() {
   const cpus = os.cpus();
   const totalMemoria = os.totalmem();
   const memoriaLibre = os.freemem();
   const memoriaUsada = totalMemoria - memoriaLibre;
+  const topProcesos = obtenerTopProcesosMemoria();
   
   return {
     plataforma: os.platform(),
@@ -73,7 +128,8 @@ function obtenerInfoSistema() {
       total: (totalMemoria / 1024 / 1024 / 1024).toFixed(2) + ' GB',
       usada: (memoriaUsada / 1024 / 1024 / 1024).toFixed(2) + ' GB',
       libre: (memoriaLibre / 1024 / 1024 / 1024).toFixed(2) + ' GB',
-      porcentajeUso: ((memoriaUsada / totalMemoria) * 100).toFixed(1) + '%'
+      porcentajeUso: ((memoriaUsada / totalMemoria) * 100).toFixed(1) + '%',
+      topProcesos: topProcesos
     }
   };
 }
@@ -328,6 +384,15 @@ function generarDashboardHTML() {
           <span class="info-label">Uso:</span>
           <span class="info-value">${infoSistema.memoria.porcentajeUso}</span>
         </div>
+        ${infoSistema.memoria.topProcesos.length > 0 ? `
+        <hr style="margin: 15px 0; border: none; border-top: 1px solid #e0e0e0;">
+        <h3 style="color: #555; font-size: 1em; margin-bottom: 10px;">📊 Top 5 Procesos</h3>
+        ${infoSistema.memoria.topProcesos.map((proc, idx) => `
+        <div class="info-row" style="background: ${idx === 0 ? '#fff3cd' : 'transparent'}; padding: 5px; border-radius: 3px;">
+          <span class="info-label">${idx + 1}. ${proc.nombre}:</span>
+          <span class="info-value">${proc.memoria}${proc.porcentaje ? ' (' + proc.porcentaje + ')' : ''}</span>
+        </div>`).join('')}
+        ` : ''}
       </div>
       
       <!-- Información del Proceso (PROCESS) -->
