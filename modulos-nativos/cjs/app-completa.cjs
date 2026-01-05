@@ -424,6 +424,167 @@ function obtenerInfoDisco() {
   }
 }
 
+// Helper para convertir tamaños a bytes para ordenar
+function parseTamano(tamano) {
+  const match = tamano.match(/([0-9.]+)([BKMGT])/);
+  if (!match) return 0;
+  
+  const valor = parseFloat(match[1]);
+  const unidad = match[2];
+  
+  const multiplicadores = {
+    'B': 1,
+    'K': 1024,
+    'M': 1024 * 1024,
+    'G': 1024 * 1024 * 1024,
+    'T': 1024 * 1024 * 1024 * 1024
+  };
+  
+  return valor * (multiplicadores[unidad] || 0);
+}
+
+// Función para encontrar archivos y carpetas pesados
+function obtenerArchivosPesados() {
+  try {
+    const plataforma = os.platform();
+    const homeDir = os.homedir();
+    let resultado = {
+      archivosPesados: [],
+      carpetasPesadas: [],
+      cachesPesados: []
+    };
+    
+    if (plataforma === 'darwin' || plataforma === 'linux') {
+      // Buscar carpetas pesadas - estrategia rápida
+      try {
+        // Primero listar carpetas del home
+        const listado = execSync(
+          `ls -d "${homeDir}"/[^.]* 2>/dev/null`,
+          { encoding: 'utf-8', timeout: 2000 }
+        );
+        
+        const carpetas = listado.trim().split('\n').filter(l => l);
+        const tamanos = [];
+        
+        // Obtener tamaño de cada carpeta con timeout corto
+        for (const carpeta of carpetas) {
+          try {
+            const tamano = execSync(
+              `du -sh "${carpeta}" 2>/dev/null`,
+              { encoding: 'utf-8', timeout: 3000 }
+            );
+            const partes = tamano.trim().split('\t');
+            if (partes.length >= 1) {
+              const nombreCarpeta = carpeta.split('/').pop() || carpeta;
+              tamanos.push({
+                nombre: nombreCarpeta,
+                tamano: partes[0],
+                tamanoBytes: parseTamano(partes[0])
+              });
+            }
+          } catch (e) {
+            // Timeout o error en esta carpeta, continuar con la siguiente
+          }
+        }
+        
+        // Ordenar por tamaño y tomar top 5
+        tamanos.sort((a, b) => b.tamanoBytes - a.tamanoBytes);
+        resultado.carpetasPesadas = tamanos.slice(0, 5).map(c => ({
+          ruta: '~/' + c.nombre,
+          tamano: c.tamano
+        }));
+        
+        console.log('📁 Carpetas pesadas encontradas:', resultado.carpetasPesadas.length);
+      } catch (e) {
+        console.error('Error buscando carpetas:', e.message);
+      }
+      
+      // Buscar archivos grandes en directorio home (solo primer nivel de subdirectorios)
+      try {
+        const archivosGrandes = execSync(
+          `find "${homeDir}" -maxdepth 3 -type f -size +2G 2>/dev/null | head -n 10`,
+          { encoding: 'utf-8', timeout: 10000 }
+        );
+        
+        const lineas = archivosGrandes.trim().split('\n').filter(l => l);
+        for (const archivo of lineas) {
+          try {
+            const stats = fs.statSync(archivo);
+            const tamanoGB = (stats.size / 1024 / 1024 / 1024).toFixed(2);
+            resultado.archivosPesados.push({
+              ruta: archivo.replace(homeDir, '~'),
+              tamano: tamanoGB + ' GB'
+            });
+          } catch (e) {
+            // Ignorar archivos inaccesibles
+          }
+        }
+      } catch (e) {
+        console.error('Error buscando archivos grandes:', e.message);
+      }
+      
+      // Buscar cachés pesados
+      const rutasCache = [
+        path.join(homeDir, 'Library/Caches'),
+        path.join(homeDir, '.cache'),
+        path.join(homeDir, '.npm'),
+        path.join(homeDir, '.yarn/cache'),
+        path.join(homeDir, '.cargo'),
+        path.join(homeDir, 'Library/Application Support/Code/CachedData')
+      ];
+      
+      rutasCache.forEach(rutaCache => {
+        try {
+          if (fs.existsSync(rutaCache)) {
+            const tamano = execSync(`du -sh "${rutaCache}" 2>/dev/null`, { encoding: 'utf-8', timeout: 3000 });
+            const partes = tamano.trim().split('\t');
+            if (partes.length >= 1 && partes[0] !== '0B') {
+              resultado.cachesPesados.push({
+                ruta: rutaCache.replace(homeDir, '~'),
+                tamano: partes[0]
+              });
+            }
+          }
+        } catch (e) {
+          // Ignorar errores
+        }
+      });
+      
+    } else if (plataforma === 'win32') {
+      // Windows: buscar archivos grandes
+      try {
+        const archivos = execSync(
+          `forfiles /P "${homeDir}" /S /M *.* /C "cmd /c if @fsize GEQ 2147483648 echo @path @fsize" 2>nul`,
+          { encoding: 'utf-8', timeout: 10000 }
+        );
+        
+        const lineas = archivos.trim().split('\n').filter(l => l).slice(0, 10);
+        lineas.forEach(linea => {
+          const partes = linea.split(' ');
+          if (partes.length >= 2) {
+            const tamanoGB = (parseInt(partes[partes.length - 1]) / 1024 / 1024 / 1024).toFixed(2);
+            resultado.archivosPesados.push({
+              ruta: partes[0],
+              tamano: tamanoGB + ' GB'
+            });
+          }
+        });
+      } catch (e) {
+        // Error al buscar
+      }
+    }
+    
+    return resultado;
+  } catch (error) {
+    console.error('Error en obtenerArchivosPesados:', error);
+    return {
+      archivosPesados: [],
+      carpetasPesadas: [],
+      cachesPesados: []
+    };
+  }
+}
+
 // 5. Obtener información del proceso usando PROCESS
 function obtenerInfoProceso() {
   const memoriaProceso = process.memoryUsage();
@@ -481,6 +642,7 @@ function generarDashboardHTML() {
   const infoSistema = obtenerInfoSistema();
   const infoProceso = obtenerInfoProceso();
   const infoDisco = obtenerInfoDisco();
+  const archivosPesados = obtenerArchivosPesados();
   const logs = obtenerUltimosLogs(10);
   const archivos = listarDirectorio(process.cwd());
   
@@ -780,6 +942,49 @@ function generarDashboardHTML() {
         </div>
       </div>
       -->
+      
+      <!-- Archivos y Carpetas Pesados -->
+      <div class="card">
+        <h2>🔍 Análisis de Espacio</h2>
+        
+        <h3 style="color: #555; font-size: 1em; margin-bottom: 10px; margin-top: 0;">📁 Top 5 Carpetas Pesadas</h3>
+        <div style="max-height: 150px; overflow-y: auto; margin-bottom: 15px;">
+          ${archivosPesados.carpetasPesadas.length > 0 
+            ? archivosPesados.carpetasPesadas.map((carpeta, idx) => `
+          <div style="background: #f8f9fa; padding: 8px 10px; margin: 5px 0; border-radius: 4px; display: flex; justify-content: space-between; font-size: 0.85em;">
+            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;" title="${carpeta.ruta}">${carpeta.ruta}</span>
+            <span style="font-weight: 600; color: #667eea; margin-left: 10px;">${carpeta.tamano}</span>
+          </div>`).join('')
+            : '<div style="padding: 10px; text-align: center; color: #999;">⏳ Buscando carpetas pesadas...</div>'
+          }
+        </div>
+        
+        ${archivosPesados.archivosPesados.length > 0 ? `
+        <h3 style="color: #555; font-size: 1em; margin-bottom: 10px;">📄 Archivos Grandes (> 2GB)</h3>
+        <div style="max-height: 150px; overflow-y: auto; margin-bottom: 15px;">
+          ${archivosPesados.archivosPesados.map((archivo, idx) => `
+          <div style="background: #fff3cd; padding: 8px 10px; margin: 5px 0; border-radius: 4px; display: flex; justify-content: space-between; font-size: 0.85em;">
+            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;" title="${archivo.ruta}">${archivo.ruta}</span>
+            <span style="font-weight: 600; color: #dc3545; margin-left: 10px;">${archivo.tamano}</span>
+          </div>`).join('')}
+        </div>
+        ` : ''}
+        
+        ${archivosPesados.cachesPesados.length > 0 ? `
+        <h3 style="color: #555; font-size: 1em; margin-bottom: 10px;">🗑️ Cachés Pesados</h3>
+        <div style="max-height: 150px; overflow-y: auto;">
+          ${archivosPesados.cachesPesados.map((cache, idx) => `
+          <div style="background: #e3f2fd; padding: 8px 10px; margin: 5px 0; border-radius: 4px; display: flex; justify-content: space-between; font-size: 0.85em;">
+            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;" title="${cache.ruta}">${cache.ruta}</span>
+            <span style="font-weight: 600; color: #1976d2; margin-left: 10px;">${cache.tamano}</span>
+          </div>`).join('')}
+        </div>
+        ` : ''}
+        
+        ${archivosPesados.carpetasPesadas.length === 0 && archivosPesados.archivosPesados.length === 0 && archivosPesados.cachesPesados.length === 0 ? `
+        <p style="text-align: center; color: #999; padding: 20px;">⏳ Analizando espacio... (puede tardar unos segundos)</p>
+        ` : ''}
+      </div>
       
       <!-- Top 5 Procesos -->
       <div class="card">
