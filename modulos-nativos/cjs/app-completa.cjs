@@ -245,6 +245,25 @@ function obtenerInfoSistema() {
   const memoriaLibre = os.freemem();
   const memoriaUsada = totalMemoria - memoriaLibre;
   const topProcesos = obtenerTopProcesosMemoria();
+  const loadAvg = os.loadavg();
+  
+  // Calcular velocidades min/max y promedio
+  const velocidades = cpus.map(cpu => cpu.speed);
+  const velocidadMin = Math.min(...velocidades);
+  const velocidadMax = Math.max(...velocidades);
+  const velocidadPromedio = Math.round(velocidades.reduce((a, b) => a + b, 0) / velocidades.length);
+  
+  // Calcular uso de CPU por núcleo
+  const nucleosDetalle = cpus.map((cpu, idx) => {
+    const total = Object.values(cpu.times).reduce((a, b) => a + b, 0);
+    const idle = cpu.times.idle;
+    const uso = total > 0 ? (((total - idle) / total) * 100).toFixed(1) : '0.0';
+    return {
+      nucleo: idx,
+      velocidad: cpu.speed,
+      uso: uso + '%'
+    };
+  });
   
   return {
     plataforma: os.platform(),
@@ -255,7 +274,15 @@ function obtenerInfoSistema() {
     cpu: {
       modelo: cpus[0].model,
       nucleos: cpus.length,
-      velocidad: cpus[0].speed
+      velocidad: velocidadPromedio,
+      velocidadMin: velocidadMin,
+      velocidadMax: velocidadMax,
+      loadAverage: {
+        '1min': loadAvg[0].toFixed(2),
+        '5min': loadAvg[1].toFixed(2),
+        '15min': loadAvg[2].toFixed(2)
+      },
+      nucleosDetalle: nucleosDetalle
     },
     memoria: {
       total: (totalMemoria / 1024 / 1024 / 1024).toFixed(2) + ' GB',
@@ -477,15 +504,29 @@ function generarDashboardHTML() {
         <h2>⚙️ Procesador</h2>
         <div class="info-row">
           <span class="info-label">Modelo:</span>
-          <span class="info-value">${infoSistema.cpu.modelo}</span>
+          <span class="info-value" style="font-size: 0.85em;">${infoSistema.cpu.modelo}</span>
         </div>
         <div class="info-row">
           <span class="info-label">Núcleos:</span>
-          <span class="info-value">${infoSistema.cpu.nucleos}</span>
+          <span class="info-value">${infoSistema.cpu.nucleos} núcleos</span>
         </div>
         <div class="info-row">
           <span class="info-label">Velocidad:</span>
-          <span class="info-value">${infoSistema.cpu.velocidad} MHz</span>
+          <span class="info-value">${infoSistema.cpu.velocidad} MHz${infoSistema.cpu.velocidadMin !== infoSistema.cpu.velocidadMax ? ` (${infoSistema.cpu.velocidadMin}-${infoSistema.cpu.velocidadMax} MHz)` : ''}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Carga Promedio:</span>
+          <span class="info-value">${infoSistema.cpu.loadAverage['1min']} / ${infoSistema.cpu.loadAverage['5min']} / ${infoSistema.cpu.loadAverage['15min']}</span>
+        </div>
+        <hr style="margin: 15px 0; border: none; border-top: 1px solid #e0e0e0;">
+        <h3 style="color: #555; font-size: 0.95em; margin-bottom: 10px;">📊 Detalle por Núcleo</h3>
+        <div style="max-height: 110px; overflow-y: auto;">
+          ${infoSistema.cpu.nucleosDetalle.map((nucleo, idx) => `
+          <div style="background: #f8f9fa; padding: 6px 10px; margin: 5px 0; border-radius: 4px; display: flex; justify-content: space-between; font-size: 0.85em;">
+            <span><strong>Núcleo ${nucleo.nucleo}</strong></span>
+            <span>${nucleo.velocidad} MHz</span>
+            <span style="color: ${parseFloat(nucleo.uso) > 80 ? '#dc3545' : parseFloat(nucleo.uso) > 50 ? '#ffc107' : '#28a745'}; font-weight: 600;">${nucleo.uso}</span>
+          </div>`).join('')}
         </div>
       </div>
       
