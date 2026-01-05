@@ -66,7 +66,7 @@ function obtenerTopProcesosMemoria() {
       comando = "ps aux --sort=-%mem | head -n 6 | tail -n 5";
     } else if (plataforma === 'win32') {
       // Windows: usar tasklist ordenado por memoria
-      comando = 'powershell "Get-Process | Sort-Object WS -Descending | Select-Object -First 5 Name,WS | Format-Table -AutoSize"';
+      comando = 'powershell "Get-Process | Sort-Object WS -Descending | Select-Object -First 5 Name,WS,Path | Format-Table -AutoSize"';
     } else {
       return [];
     }
@@ -81,8 +81,16 @@ function obtenerTopProcesosMemoria() {
         const partes = lineas[i].trim().split(/\s+/);
         if (partes.length >= 2) {
           const nombre = partes[0];
+          const rutaCompleta = partes.slice(2).join(' ');
+          const extension = path.extname(nombre);
           const memoria = (parseInt(partes[1]) / 1024 / 1024).toFixed(2);
-          procesos.push({ nombre, memoria: memoria + ' MB' });
+          const aplicacion = detectarAplicacion(nombre, rutaCompleta);
+          procesos.push({ 
+            nombre, 
+            extension: extension || 'N/A',
+            aplicacion,
+            memoria: memoria + ' MB' 
+          });
         }
       }
     } else {
@@ -90,11 +98,34 @@ function obtenerTopProcesosMemoria() {
       lineas.forEach(linea => {
         const partes = linea.trim().split(/\s+/);
         if (partes.length >= 11) {
-          const nombre = partes[10].split('/').pop(); // Nombre del proceso
+          const rutaCompleta = partes[10]; // Ruta completa del proceso
+          const nombre = rutaCompleta.split('/').pop(); // Nombre del proceso
           const memPorcentaje = partes[3]; // %MEM
           const rss = parseInt(partes[5]); // RSS en KB
           const memoriaMB = (rss / 1024).toFixed(2);
-          procesos.push({ nombre, memoria: memoriaMB + ' MB', porcentaje: memPorcentaje + '%' });
+          
+          // Detectar extensión o tipo de proceso
+          let extension = path.extname(nombre);
+          if (!extension) {
+            // En macOS, detectar si es parte de una app
+            if (rutaCompleta.includes('.app/')) {
+              extension = '.app';
+            } else if (rutaCompleta.includes('/bin/') || rutaCompleta.includes('/sbin/')) {
+              extension = 'binario';
+            } else {
+              extension = 'proceso';
+            }
+          }
+          
+          const aplicacion = detectarAplicacion(nombre, rutaCompleta);
+          
+          procesos.push({ 
+            nombre, 
+            extension,
+            aplicacion,
+            memoria: memoriaMB + ' MB', 
+            porcentaje: memPorcentaje + '%' 
+          });
         }
       });
     }
@@ -103,6 +134,112 @@ function obtenerTopProcesosMemoria() {
   } catch (error) {
     return [];
   }
+}
+
+// Función auxiliar para detectar a qué aplicación corresponde un proceso
+function detectarAplicacion(nombreProceso, rutaCompleta) {
+  const nombre = nombreProceso.toLowerCase();
+  const ruta = rutaCompleta.toLowerCase();
+  
+  // Detección prioritaria por contexto de ruta y nombre
+  
+  // Firefox y sus procesos relacionados
+  if (nombre.includes('plugin-container') || nombre.includes('plugincontainer')) {
+    return 'Firefox Plugin Container';
+  }
+  if (nombre.includes('firefox') || ruta.includes('firefox')) {
+    return 'Mozilla Firefox';
+  }
+  
+  // Visual Studio Code y sus procesos
+  if (nombre === 'visual' || nombre.startsWith('visual ') || 
+      ruta.includes('visual studio code') || ruta.includes('vscode') ||
+      ruta.includes('code.app') || ruta.includes('electron')) {
+    return 'Visual Studio Code';
+  }
+  
+  // Chrome y sus procesos
+  if (nombre.includes('chrome helper') || nombre.includes('chromehelper')) {
+    return 'Chrome Helper';
+  }
+  
+  // Mapa de procesos comunes a aplicaciones
+  const mapeoAplicaciones = {
+    // Navegadores
+    'chrome': 'Google Chrome',
+    'chromium': 'Chromium',
+    'safari': 'Safari',
+    'edge': 'Microsoft Edge',
+    'opera': 'Opera',
+    'brave': 'Brave Browser',
+    
+    // Editores/IDEs
+    'code': 'Visual Studio Code',
+    'vscode': 'Visual Studio Code',
+    'sublime': 'Sublime Text',
+    'atom': 'Atom Editor',
+    'vim': 'Vim',
+    'emacs': 'Emacs',
+    'intellij': 'IntelliJ IDEA',
+    'pycharm': 'PyCharm',
+    'webstorm': 'WebStorm',
+    
+    // Desarrollo
+    'node': 'Node.js',
+    'python': 'Python',
+    'java': 'Java',
+    'docker': 'Docker',
+    'postgres': 'PostgreSQL',
+    'mysql': 'MySQL',
+    'redis': 'Redis',
+    'nginx': 'Nginx',
+    'apache': 'Apache',
+    
+    // Comunicación
+    'slack': 'Slack',
+    'discord': 'Discord',
+    'teams': 'Microsoft Teams',
+    'zoom': 'Zoom',
+    'skype': 'Skype',
+    
+    // Sistema
+    'finder': 'Finder',
+    'explorer': 'Windows Explorer',
+    'windowserver': 'Window Server (macOS)',
+    'kernel_task': 'Kernel (macOS)',
+    'systemd': 'Systemd (Linux)',
+    'svchost': 'Windows Service Host',
+    'dwm': 'Desktop Window Manager',
+    
+    // Otros
+    'spotify': 'Spotify',
+    'itunes': 'iTunes',
+    'terminal': 'Terminal',
+    'iterm': 'iTerm2',
+    'wsl': 'Windows Subsystem for Linux'
+  };
+  
+  // Buscar coincidencias en el nombre del proceso
+  for (const [clave, valor] of Object.entries(mapeoAplicaciones)) {
+    if (nombre.includes(clave)) {
+      return valor;
+    }
+  }
+  
+  // Si la ruta contiene información útil (macOS)
+  if (ruta.includes('applications/')) {
+    // Extraer nombre de aplicación en macOS
+    const match = ruta.match(/applications\/([^/]+)\.app/);
+    if (match) {
+      const appName = match[1].replace(/-/g, ' ');
+      return appName.split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    }
+  }
+  
+  // Si no se encuentra, devolver el nombre del proceso capitalizado
+  return nombreProceso.charAt(0).toUpperCase() + nombreProceso.slice(1);
 }
 
 // 5. Obtener información del sistema usando OS
@@ -218,15 +355,6 @@ function generarDashboardHTML() {
       margin-bottom: 30px;
       font-size: 2.5em;
       text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-    }
-    .badge-esm {
-      background: #4caf50;
-      color: white;
-      padding: 5px 15px;
-      border-radius: 20px;
-      font-size: 0.6em;
-      margin-left: 10px;
-      vertical-align: middle;
     }
     .grid {
       display: grid;
@@ -384,15 +512,6 @@ function generarDashboardHTML() {
           <span class="info-label">Uso:</span>
           <span class="info-value">${infoSistema.memoria.porcentajeUso}</span>
         </div>
-        ${infoSistema.memoria.topProcesos.length > 0 ? `
-        <hr style="margin: 15px 0; border: none; border-top: 1px solid #e0e0e0;">
-        <h3 style="color: #555; font-size: 1em; margin-bottom: 10px;">📊 Top 5 Procesos</h3>
-        ${infoSistema.memoria.topProcesos.map((proc, idx) => `
-        <div class="info-row" style="background: ${idx === 0 ? '#fff3cd' : 'transparent'}; padding: 5px; border-radius: 3px;">
-          <span class="info-label">${idx + 1}. ${proc.nombre}:</span>
-          <span class="info-value">${proc.memoria}${proc.porcentaje ? ' (' + proc.porcentaje + ')' : ''}</span>
-        </div>`).join('')}
-        ` : ''}
       </div>
       
       <!-- Información del Proceso (PROCESS) -->
@@ -445,12 +564,32 @@ function generarDashboardHTML() {
         </div>
       </div>
       
-      <!-- Logs (FS) -->
+      <!-- Logs (FS) - Comentado -->
+      <!--
       <div class="card">
         <h2>📋 Últimos Accesos (Logs FS)</h2>
         <div style="max-height: 300px; overflow-y: auto;">
           ${logs.length > 0 ? logs.map(log => `<div class="log-entry">${log}</div>`).join('') : '<p>No hay logs disponibles</p>'}
         </div>
+      </div>
+      -->
+      
+      <!-- Top 5 Procesos -->
+      <div class="card">
+        <h2>📊 Top 5 Procesos por Memoria</h2>
+        ${infoSistema.memoria.topProcesos.length > 0 ? `
+        ${infoSistema.memoria.topProcesos.map((proc, idx) => `
+        <div style="background: ${idx === 0 ? '#fff3cd' : '#f8f9fa'}; padding: 12px; margin: 10px 0; border-radius: 6px; border-left: 4px solid ${idx === 0 ? '#ffc107' : '#667eea'};">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span style="font-weight: 600; color: #333; font-size: 1em;">${idx + 1}. ${proc.nombre}</span>
+            <span style="font-weight: 700; color: #667eea; font-size: 1em;">${proc.memoria}${proc.porcentaje ? ' (' + proc.porcentaje + ')' : ''}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.85em; color: #666;">
+            <span>📦 ${proc.aplicacion}</span>
+            <span style="background: #e3f2fd; padding: 3px 10px; border-radius: 10px; font-family: monospace; font-weight: 500;">${proc.extension}</span>
+          </div>
+        </div>`).join('')}
+        ` : '<p style="color: #999; text-align: center; padding: 20px;">No hay información de procesos disponible</p>'}
       </div>
     </div>
     
