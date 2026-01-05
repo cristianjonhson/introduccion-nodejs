@@ -335,6 +335,99 @@ function obtenerInfoSistema() {
   };
 }
 
+// Función para obtener información del disco
+function obtenerInfoDisco() {
+  try {
+    const plataforma = os.platform();
+    let discos = [];
+    
+    if (plataforma === 'darwin' || plataforma === 'linux') {
+      // macOS y Linux: usar df
+      const output = execSync('df -h /', { encoding: 'utf-8' });
+      const lineas = output.trim().split('\n');
+      
+      if (lineas.length > 1) {
+        const partes = lineas[1].trim().split(/\s+/);
+        if (partes.length >= 5) {
+          discos.push({
+            dispositivo: partes[0],
+            tamano: partes[1],
+            usado: partes[2],
+            disponible: partes[3],
+            porcentajeUso: partes[4],
+            montaje: partes[5] || '/'
+          });
+        }
+      }
+      
+      // Intentar obtener más discos montados
+      try {
+        const allDisks = execSync('df -h | grep -E "^/dev"', { encoding: 'utf-8' });
+        const allLines = allDisks.trim().split('\n');
+        
+        allLines.forEach((linea, idx) => {
+          if (idx === 0) return; // Saltar el primero que ya agregamos
+          const partes = linea.trim().split(/\s+/);
+          if (partes.length >= 5) {
+            discos.push({
+              dispositivo: partes[0],
+              tamano: partes[1],
+              usado: partes[2],
+              disponible: partes[3],
+              porcentajeUso: partes[4],
+              montaje: partes[5] || 'N/A'
+            });
+          }
+        });
+      } catch (e) {
+        // Ignorar errores al buscar discos adicionales
+      }
+      
+    } else if (plataforma === 'win32') {
+      // Windows: usar wmic
+      const output = execSync('wmic logicaldisk get caption,size,freespace,volumename', { encoding: 'utf-8' });
+      const lineas = output.trim().split('\n').slice(1);
+      
+      lineas.forEach(linea => {
+        const partes = linea.trim().split(/\s+/);
+        if (partes.length >= 3) {
+          const tamanoTotal = parseInt(partes[2]) || 0;
+          const libre = parseInt(partes[1]) || 0;
+          const usado = tamanoTotal - libre;
+          const porcentaje = tamanoTotal > 0 ? ((usado / tamanoTotal) * 100).toFixed(1) : '0';
+          
+          discos.push({
+            dispositivo: partes[0],
+            tamano: (tamanoTotal / 1024 / 1024 / 1024).toFixed(2) + ' GB',
+            usado: (usado / 1024 / 1024 / 1024).toFixed(2) + ' GB',
+            disponible: (libre / 1024 / 1024 / 1024).toFixed(2) + ' GB',
+            porcentajeUso: porcentaje + '%',
+            montaje: partes[3] || 'Local Disk'
+          });
+        }
+      });
+    }
+    
+    return discos.length > 0 ? discos : [{
+      dispositivo: 'N/A',
+      tamano: 'N/A',
+      usado: 'N/A',
+      disponible: 'N/A',
+      porcentajeUso: 'N/A',
+      montaje: 'N/A'
+    }];
+  } catch (error) {
+    return [{
+      dispositivo: 'Error',
+      tamano: 'N/A',
+      usado: 'N/A',
+      disponible: 'N/A',
+      porcentajeUso: 'N/A',
+      montaje: 'Error al obtener información'
+    }];
+  }
+}
+
 // 5. Obtener información del proceso usando PROCESS
 function obtenerInfoProceso() {
   const memoriaProceso = process.memoryUsage();
@@ -391,6 +484,7 @@ function listarDirectorio(directorio) {
 function generarDashboardHTML() {
   const infoSistema = obtenerInfoSistema();
   const infoProceso = obtenerInfoProceso();
+  const infoDisco = obtenerInfoDisco();
   const logs = obtenerUltimosLogs(10);
   const archivos = listarDirectorio(process.cwd());
   
@@ -596,7 +690,8 @@ function generarDashboardHTML() {
         </div>
       </div>
       
-      <!-- Información del Proceso (PROCESS) -->
+      <!-- Información del Proceso (PROCESS) - Comentado -->
+      <!--
       <div class="card">
         <h2>🔄 Proceso Node.js</h2>
         <div class="info-row">
@@ -619,6 +714,40 @@ function generarDashboardHTML() {
           <span class="info-label">Uptime:</span>
           <span class="info-value">${infoProceso.uptime}s</span>
         </div>
+      </div>
+      -->
+      
+      <!-- Información de Disco -->
+      <div class="card">
+        <h2>💿 Almacenamiento</h2>
+        ${infoDisco.map((disco, idx) => `
+        <div style="${idx > 0 ? 'margin-top: 15px; padding-top: 15px; border-top: 1px solid #e0e0e0;' : ''}">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span style="font-weight: 600; color: #333;">${disco.dispositivo}</span>
+            <span style="font-size: 0.85em; color: #666;">${disco.montaje}</span>
+          </div>
+          <div class="info-row" style="border: none; padding: 4px 0;">
+            <span class="info-label">Tamaño:</span>
+            <span class="info-value">${disco.tamano}</span>
+          </div>
+          <div class="info-row" style="border: none; padding: 4px 0;">
+            <span class="info-label">Usado:</span>
+            <span class="info-value">${disco.usado}</span>
+          </div>
+          <div class="info-row" style="border: none; padding: 4px 0;">
+            <span class="info-label">Disponible:</span>
+            <span class="info-value">${disco.disponible}</span>
+          </div>
+          <div style="margin-top: 8px;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.85em; margin-bottom: 4px;">
+              <span>Uso del disco</span>
+              <span style="font-weight: 600; color: ${parseFloat(disco.porcentajeUso) > 80 ? '#dc3545' : parseFloat(disco.porcentajeUso) > 60 ? '#ffc107' : '#28a745'};">${disco.porcentajeUso}</span>
+            </div>
+            <div style="width: 100%; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden;">
+              <div style="width: ${disco.porcentajeUso}; height: 100%; background: ${parseFloat(disco.porcentajeUso) > 80 ? '#dc3545' : parseFloat(disco.porcentajeUso) > 60 ? '#ffc107' : '#28a745'}; transition: width 0.3s;"></div>
+            </div>
+          </div>
+        </div>`).join('')}
       </div>
       
       <!-- Memoria del Proceso (PROCESS) -->
