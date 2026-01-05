@@ -197,13 +197,26 @@ node modulos-nativos/esm/app-completa.mjs
 **Módulos integrados:**
 - ✅ **fs** - Sistema de logs de acceso en archivos
 - ✅ **path** - Manejo de rutas y directorios
-- ✅ **os** - Información completa del sistema operativo
+- ✅ **os** - Información completa del sistema operativo (versión detallada, carga promedio)
 - ✅ **http** - Servidor web con interfaz visual
 - ✅ **process** - Monitoreo del proceso Node.js
 - ✅ **ls/fs** - Listado de archivos del directorio
+- ✅ **child_process** - Top 5 procesos por memoria con detección de aplicaciones
+- ✅ **Almacenamiento** - Información de disco (uso, disponible, particiones)
+- ✅ **Análisis de Espacio** - Carpetas pesadas, archivos grandes >2GB, cachés pesados
 
 **Endpoints:**
-- `/` - Dashboard visual interactivo
+- `/` - Dashboard visual interactivo con:
+  - 💻 **Sistema Operativo**: Versión detallada, kernel, arquitectura, hostname
+  - ⚡ **Procesador**: Modelo, núcleos, velocidad, carga promedio (1/5/15 min), uso por núcleo
+  - 🧠 **Memoria**: Total, usada, libre, swap con indicadores visuales de colores
+  - 📁 **Top 5 Procesos**: Procesos con mayor consumo de memoria (con detección de aplicación)
+  - 💾 **Almacenamiento**: Uso de disco, disponible, particiones con barras de progreso
+  - 🔍 **Análisis de Espacio**: 
+    - Top 5 carpetas más pesadas en tu directorio home
+    - Archivos grandes mayores a 2GB
+    - Cachés pesados (.cache, .npm, .cargo, VS Code, etc.)
+  - 📝 **Archivos**: Listado del directorio actual
 - `/api/info` - API JSON con toda la información del sistema
 - `/api/logs` - Últimos 50 registros de acceso
 
