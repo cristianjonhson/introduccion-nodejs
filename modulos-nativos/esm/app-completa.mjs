@@ -242,6 +242,42 @@ function detectarAplicacion(nombreProceso, rutaCompleta) {
   return nombreProceso.charAt(0).toUpperCase() + nombreProceso.slice(1);
 }
 
+// Función para obtener versión detallada del SO
+function obtenerVersionSO() {
+  try {
+    const plataforma = os.platform();
+    
+    if (plataforma === 'darwin') {
+      // macOS: obtener versión de ProductVersion
+      const version = execSync('sw_vers -productVersion', { encoding: 'utf-8' }).trim();
+      const nombre = execSync('sw_vers -productName', { encoding: 'utf-8' }).trim();
+      const build = execSync('sw_vers -buildVersion', { encoding: 'utf-8' }).trim();
+      return `${nombre} ${version} (Build ${build})`;
+    } else if (plataforma === 'linux') {
+      // Linux: intentar leer /etc/os-release
+      try {
+        const osRelease = execSync('cat /etc/os-release | grep PRETTY_NAME', { encoding: 'utf-8' });
+        const match = osRelease.match(/PRETTY_NAME="(.+)"/);
+        if (match) return match[1];
+      } catch (e) {
+        return `Linux ${os.release()}`;
+      }
+    } else if (plataforma === 'win32') {
+      // Windows: obtener versión con wmic
+      const version = execSync('wmic os get Caption,Version /value', { encoding: 'utf-8' });
+      const captionMatch = version.match(/Caption=(.+)/);
+      const versionMatch = version.match(/Version=(.+)/);
+      if (captionMatch && versionMatch) {
+        return `${captionMatch[1].trim()} (${versionMatch[1].trim()})`;
+      }
+    }
+    
+    return `${os.type()} ${os.release()}`;
+  } catch (error) {
+    return `${os.type()} ${os.release()}`;
+  }
+}
+
 // 5. Obtener información del sistema usando OS
 function obtenerInfoSistema() {
   const cpus = os.cpus();
@@ -273,7 +309,8 @@ function obtenerInfoSistema() {
     plataforma: os.platform(),
     arquitectura: os.arch(),
     hostname: os.hostname(),
-    sistemaOperativo: `${os.type()} ${os.release()}`,
+    sistemaOperativo: obtenerVersionSO(),
+    kernel: os.release(),
     uptime: Math.floor(os.uptime()),
     cpu: {
       modelo: cpus[0].model,
@@ -482,12 +519,16 @@ function generarDashboardHTML() {
       <div class="card">
         <h2>💻 Sistema Operativo</h2>
         <div class="info-row">
-          <span class="info-label">Plataforma:</span>
-          <span class="info-value">${infoSistema.plataforma}</span>
+          <span class="info-label">Sistema:</span>
+          <span class="info-value">${infoSistema.sistemaOperativo}</span>
         </div>
         <div class="info-row">
-          <span class="info-label">SO:</span>
-          <span class="info-value">${infoSistema.sistemaOperativo}</span>
+          <span class="info-label">Kernel:</span>
+          <span class="info-value">${infoSistema.kernel}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Plataforma:</span>
+          <span class="info-value">${infoSistema.plataforma}</span>
         </div>
         <div class="info-row">
           <span class="info-label">Arquitectura:</span>
