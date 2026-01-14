@@ -637,6 +637,167 @@ function listarDirectorio(directorio) {
   }
 }
 
+// ===== NUEVO: helpers para comandos y parseo (Temperatura) =====
+function comandoDisponible(cmd) {
+  try {
+    const plataforma = os.platform();
+    const check = plataforma === 'win32' ? `where ${cmd}` : `command -v ${cmd}`;
+    execSync(check, { stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function execSeguro(comando, timeout = 2000) {
+  try {
+    return execSync(comando, { encoding: 'utf-8', timeout, stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+  } catch {
+    return null;
+  }
+}
+
+function extraerNumero(texto) {
+  if (!texto) return null;
+  const m = texto.match(/(-?\d+(\.\d+)?)/);
+  return m ? Number(m[1]) : null;
+}
+
+function colorTemp(t) {
+  if (t == null || Number.isNaN(t)) return '#666';
+  if (t >= 85) return '#dc3545'; // rojo
+  if (t >= 70) return '#ffc107'; // amarillo
+  return '#28a745';              // verde
+}
+
+// ===== NUEVO: best-effort para temperaturas (macOS/Linux/Windows) =====
+function obtenerTemperaturas() {
+  const plataforma = os.platform();
+
+  let cpuC = null;
+  let cpuFuente = '';
+  let gpuC = null;
+  let gpuFuente = '';
+  let gpuNombre = '';
+  const warnings = [];
+
+  // ---------- macOS ----------
+  // ---------- macOS ----------
+  if (plataforma === 'darwin') {
+    // Nombre de GPU (para mostrarlo aunque no haya temp)
+    const gpuNameOut = execSeguro(
+      `system_profiler SPDisplaysDataType | awk -F": " '/Chipset Model/{print $2; exit}'`,
+      2500
+    );
+    gpuNombre = gpuNameOut || '';
+
+    // ✅ PRIORIDAD 1: smctemp (CPU + GPU) (Homebrew tap)
+    if (comandoDisponible('smctemp')) {
+      const outCpu = execSeguro('smctemp -c -n3 -f', 1500); // imprime número (ej: 64.2)
+      const outGpu = execSeguro('smctemp -g -n3 -f', 1500); // imprime número (ej: 36.2)
+
+      cpuC = extraerNumero(outCpu);
+      gpuC = extraerNumero(outGpu);
+
+      cpuFuente = 'smctemp';
+      gpuFuente = 'smctemp';
+
+      if (cpuC == null) warnings.push('smctemp no devolvió temperatura CPU (sensor no disponible).');
+      if (gpuC == null) warnings.push('smctemp no devolvió temperatura GPU (sensor no disponible).');
+
+      return {
+        cpu: { celsius: cpuC, fuente: cpuFuente },
+        gpu: { celsius: gpuC, fuente: gpuFuente, nombre: gpuNombre || '' },
+        warnings
+      };
+    }
+
+    // CPU fallback: osx-cpu-temp
+    if (comandoDisponible('osx-cpu-temp')) {
+      const out = execSeguro('osx-cpu-temp', 1500); // ej: "55.0°C"
+      cpuC = extraerNumero(out);
+      cpuFuente = 'osx-cpu-temp';
+    } else {
+      warnings.push('macOS: instala "smctemp" (recomendado) o "osx-cpu-temp" para CPU.');
+    }
+
+    // GPU fallback: powermetrics (requiere sudo)
+    if (gpuC == null && process.getuid && process.getuid() === 0) {
+      const out = execSeguro('powermetrics -n 1 -i 1 --samplers smc 2>/dev/null', 3500);
+      const m = out && out.match(/GPU die temperature:\s*([0-9.]+)\s*C/i);
+      if (m) {
+        gpuC = Number(m[1]);
+        gpuFuente = 'powermetrics';
+      }
+    }
+
+    if (gpuC == null) {
+      warnings.push('macOS: para GPU, instala "smctemp" (recomendado). Con powermetrics suele requerir sudo.');
+    }
+  }
+
+
+  // ---------- Linux ----------
+  else if (plataforma === 'linux') {
+    if (comandoDisponible('sensors')) {
+      const out = execSeguro('sensors', 2500);
+      const line = out && out.split('\n').find(l => /Package id 0:|Tctl:|Tdie:|temp1:/i.test(l));
+      cpuC = extraerNumero(line);
+      cpuFuente = cpuC != null ? 'sensors' : '';
+    } else {
+      warnings.push('Linux: instala lm-sensors (comando "sensors") para temperatura CPU.');
+    }
+
+    if (comandoDisponible('nvidia-smi')) {
+      const out = execSeguro('nvidia-smi --query-gpu=name,temperature.gpu --format=csv,noheader,nounits', 2000);
+      if (out) {
+        const first = out.split('\n')[0];
+        const parts = first.split(',').map(s => s.trim());
+        gpuNombre = parts[0] || '';
+        gpuC = parts[1] ? Number(parts[1]) : null;
+        gpuFuente = 'nvidia-smi';
+      }
+    } else if (comandoDisponible('rocm-smi')) {
+      const out = execSeguro('rocm-smi --showtemp', 2500);
+      gpuC = extraerNumero(out);
+      gpuFuente = gpuC != null ? 'rocm-smi' : '';
+      gpuNombre = gpuC != null ? 'AMD GPU' : '';
+    } else {
+      warnings.push('GPU: para NVIDIA se usa "nvidia-smi"; para AMD a veces "rocm-smi".');
+    }
+  }
+
+  // ---------- Windows ----------
+  else if (plataforma === 'win32') {
+    const outCpu = execSeguro(
+      'powershell -NoProfile -Command "($t=Get-CimInstance -Namespace root/wmi -ClassName MSAcpi_ThermalZoneTemperature | Select-Object -First 1 -ExpandProperty CurrentTemperature); if($t){[math]::Round(($t/10)-273.15,1)}"',
+      3000
+    );
+    cpuC = extraerNumero(outCpu);
+    cpuFuente = cpuC != null ? 'MSAcpi_ThermalZoneTemperature' : '';
+
+    if (comandoDisponible('nvidia-smi')) {
+      const out = execSeguro('nvidia-smi --query-gpu=name,temperature.gpu --format=csv,noheader,nounits', 2000);
+      if (out) {
+        const first = out.split('\n')[0];
+        const parts = first.split(',').map(s => s.trim());
+        gpuNombre = parts[0] || '';
+        gpuC = parts[1] ? Number(parts[1]) : null;
+        gpuFuente = 'nvidia-smi';
+      }
+    } else {
+      warnings.push('Windows: GPU temp suele requerir drivers NVIDIA + nvidia-smi.');
+    }
+  }
+
+  return {
+    cpu: { celsius: cpuC, fuente: cpuFuente || 'N/A' },
+    gpu: { celsius: gpuC, fuente: gpuFuente || 'N/A', nombre: gpuNombre || '' },
+    warnings
+  };
+}
+
+
 // 7. Generar HTML del dashboard
 function generarDashboardHTML() {
   const infoSistema = obtenerInfoSistema();
@@ -645,6 +806,8 @@ function generarDashboardHTML() {
   const archivosPesados = obtenerArchivosPesados();
   const logs = obtenerUltimosLogs(10);
   const archivos = listarDirectorio(process.cwd());
+
+  const temperaturas = obtenerTemperaturas(); 
   
   return `
 <!DOCTYPE html>
@@ -932,6 +1095,37 @@ function generarDashboardHTML() {
           <span class="info-value">${infoProceso.cpu.system}</span>
         </div>
       </div>
+
+            <!-- Temperaturas CPU / GPU -->
+      <div class="card">
+        <h2>🌡️ Temperaturas</h2>
+
+        <div class="info-row">
+          <span class="info-label">CPU:</span>
+          <span class="info-value" style="font-weight: 700; color: ${colorTemp(temperaturas.cpu.celsius)};">
+            ${temperaturas.cpu.celsius != null ? `${temperaturas.cpu.celsius.toFixed(1)} °C` : 'N/A'}
+          </span>
+        </div>
+
+        <div class="info-row">
+          <span class="info-label">GPU:</span>
+          <span class="info-value" style="font-weight: 700; color: ${colorTemp(temperaturas.gpu.celsius)};">
+            ${temperaturas.gpu.celsius != null ? `${temperaturas.gpu.celsius.toFixed(1)} °C` : 'N/A'}
+          </span>
+        </div>
+
+        <div style="margin-top: 10px; color: #666; font-size: 0.85em; line-height: 1.4;">
+          <div><strong>Fuente CPU:</strong> ${temperaturas.cpu.fuente}</div>
+          <div><strong>Fuente GPU:</strong> ${temperaturas.gpu.fuente}${temperaturas.gpu.nombre ? ` (${temperaturas.gpu.nombre})` : ''}</div>
+        </div>
+
+        ${temperaturas.warnings?.length ? `
+          <div style="margin-top: 12px; padding: 10px; background: #fff3cd; border-radius: 6px; font-size: 0.85em; color: #664d03;">
+            ${temperaturas.warnings.map(w => `• ${w}`).join('<br>')}
+          </div>
+        ` : ''}
+      </div>
+
       
       <!-- Logs (FS) - Comentado -->
       <!--
