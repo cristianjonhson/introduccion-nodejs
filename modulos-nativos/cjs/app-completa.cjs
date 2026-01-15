@@ -637,165 +637,389 @@ function listarDirectorio(directorio) {
   }
 }
 
-// ===== NUEVO: helpers para comandos y parseo (Temperatura) =====
+// === NUEVO: helpers para comandos externos ===
 function comandoDisponible(cmd) {
   try {
-    const plataforma = os.platform();
-    const check = plataforma === 'win32' ? `where ${cmd}` : `command -v ${cmd}`;
-    execSync(check, { stdio: 'ignore' });
+    if (os.platform() === 'win32') {
+      execSync(`where ${cmd}`, { stdio: 'ignore', timeout: 1200 });
+    } else {
+      execSync(`command -v ${cmd}`, { stdio: 'ignore', timeout: 1200 });
+    }
     return true;
   } catch {
     return false;
   }
 }
 
-function execSeguro(comando, timeout = 2000) {
+function parseTemp(v) {
+  if (typeof v === 'number') return v;
+  if (typeof v !== 'string') return null;
+  const m = v.match(/-?\d+(\.\d+)?/);
+  return m ? Number(m[0]) : null;
+}
+
+function formatCelsius(n) {
+  return typeof n === 'number' && Number.isFinite(n) ? `${n.toFixed(1)} °C` : 'N/A';
+}
+
+
+// Ejecuta comandos de forma segura (captura stdout y stderr)
+function execCmd(comando, timeout = 3000) {
   try {
-    return execSync(comando, { encoding: 'utf-8', timeout, stdio: ['ignore', 'pipe', 'ignore'] }).trim();
-  } catch {
-    return null;
+    const stdout = execSync(comando, {
+      encoding: 'utf-8',
+      timeout,
+      stdio: ['ignore', 'pipe', 'pipe']
+    });
+    return { ok: true, stdout: (stdout || '').toString(), stderr: '' };
+  } catch (e) {
+    return {
+      ok: false,
+      stdout: (e.stdout ? e.stdout.toString() : ''),
+      stderr: (e.stderr ? e.stderr.toString() : (e.message || 'Error'))
+    };
   }
 }
 
-function extraerNumero(texto) {
-  if (!texto) return null;
-  const m = texto.match(/(-?\d+(\.\d+)?)/);
-  return m ? Number(m[1]) : null;
+// Intenta parsear JSON normal o NDJSON (json por línea)
+function parseISMCOutput(raw) {
+  const txt = (raw || '').trim();
+  if (!txt) return [];
+
+  // 1) JSON normal
+  try {
+    const obj = JSON.parse(txt);
+    if (Array.isArray(obj)) return obj;
+    // si viene envuelto en alguna propiedad, intentamos extraer arrays internas
+    const arrays = [];
+    const stack = [obj];
+    while (stack.length) {
+      const cur = stack.pop();
+      if (!cur || typeof cur !== 'object') continue;
+      if (Array.isArray(cur)) arrays.push(...cur);
+      else Object.values(cur).forEach(v => stack.push(v));
+    }
+    return arrays;
+  } catch (_) {
+    // 2) NDJSON (una línea = un JSON)
+    const out = [];
+    const lines = txt.split('\n').map(l => l.trim()).filter(Boolean);
+    for (const line of lines) {
+      try {
+        out.push(JSON.parse(line));
+      } catch (e) {
+        // si una línea no parsea, la ignoramos
+      }
+    }
+    return out;
+  }
 }
 
-function colorTemp(t) {
-  if (t == null || Number.isNaN(t)) return '#666';
-  if (t >= 85) return '#dc3545'; // rojo
-  if (t >= 70) return '#ffc107'; // amarillo
-  return '#28a745';              // verde
+function normalizarSensor(s) {
+  if (!s || typeof s !== 'object') return null;
+
+  const key =
+    s.key ?? s.Key ?? s.smc_key ?? s.SMCKey ?? s.name ?? s.Name ?? s.sensor ?? s.Sensor ?? '';
+
+  const desc =
+    s.desc ?? s.Desc ?? s.description ?? s.Description ?? s.label ?? s.Label ?? s.human ?? s.Human ?? '';
+
+  const valRaw =
+    s.value ?? s.Value ?? s.temp ?? s.Temp ?? s.temperature ?? s.Temperature ?? s.reading ?? s.Reading;
+
+  const txt = (valRaw !== undefined && valRaw !== null) ? String(valRaw) : '';
+  const m = txt.match(/-?\d+(?:[.,]\d+)?/);
+  const num = m ? parseFloat(m[0].replace(',', '.')) : null;
+
+  return { key: String(key), desc: String(desc), value: num, raw: txt };
 }
 
-// ===== NUEVO: best-effort para temperaturas (macOS/Linux/Windows) =====
+function formatearCelsius(n) {
+  if (typeof n === 'string') {
+    const m = n.match(/-?\d+(?:[.,]\d+)?/);
+    n = m ? parseFloat(m[0].replace(',', '.')) : NaN;
+  }
+  if (typeof n !== 'number' || !Number.isFinite(n)) return 'N/A';
+  return `${n.toFixed(1)} °C`;
+}
+
+
+function obtenerInfoTemperaturas() {
+  const plataforma = os.platform();
+
+  // Por ahora nos enfocamos en macOS (tu caso)
+  if (plataforma !== 'darwin') {
+    return {
+      cpuPackage: null,
+      gpu: null,
+      porNucleo: [],
+      fuenteCpu: 'N/A',
+      fuenteGpu: 'N/A',
+      diag: { plataforma }
+    };
+  }
+
+  const diag = {};
+  let sensores = [];
+  let fuenteISMC = false;
+
+  // 1) Intentar iSMC (JSON)
+  const r1 = execCmd('iSMC temp -o json', 4000);
+  diag.ismc_json_ok = r1.ok;
+  diag.ismc_json_stderr = r1.stderr?.trim() || '';
+  diag.ismc_json_stdout_len = (r1.stdout || '').length;
+
+  if (r1.ok && (r1.stdout || '').trim()) {
+    const parsed = parseISMCOutput(r1.stdout);
+    const norm = parsed.map(normalizarSensor).filter(Boolean);
+    if (norm.length) {
+      sensores = norm;
+      fuenteISMC = true;
+    }
+  }
+
+  // 2) Fallback: iSMC (table) si JSON no sirvió (a veces el JSON viene raro o vacío)
+  if (!sensores.length) {
+    const r2 = execCmd('iSMC temp -o table', 4000);
+    diag.ismc_table_ok = r2.ok;
+    diag.ismc_table_stderr = r2.stderr?.trim() || '';
+    diag.ismc_table_stdout_len = (r2.stdout || '').length;
+
+    // Si no podemos parsear table “bonito”, al menos guardamos diag.
+    // (Podemos mejorar parseo si nos pegas 10 líneas del output real.)
+  }
+
+  // Heurísticas para elegir CPU/GPU si tenemos sensores
+  let cpuPackage = null;
+  let gpu = null;
+  const porNucleo = [];
+
+  if (sensores.length) {
+    // CPU candidates
+    const cpuCandidates = sensores.filter(s => /cpu/i.test(`${s.key} ${s.desc}`) && typeof s.value === 'number');
+    const cpuPick =
+      cpuCandidates.find(s => /package|die|proximity|peci/i.test(`${s.key} ${s.desc}`)) ||
+      cpuCandidates[0];
+
+    if (cpuPick) cpuPackage = cpuPick.value;
+
+    // GPU candidates
+    const gpuCandidates = sensores.filter(s => /gpu|graphics/i.test(`${s.key} ${s.desc}`) && typeof s.value === 'number');
+    const gpuPick =
+      gpuCandidates.find(s => /die|proximity/i.test(`${s.key} ${s.desc}`)) ||
+      gpuCandidates[0];
+
+    if (gpuPick) gpu = gpuPick.value;
+
+    // Per-core (si existe)
+    const coreCandidates = sensores.filter(s => /core/i.test(`${s.key} ${s.desc}`) && typeof s.value === 'number');
+    coreCandidates.forEach(s => {
+      // Intenta sacar número de core desde desc/key
+      const m = (`${s.desc} ${s.key}`).match(/core\s*(\d+)/i);
+      const idx = m ? parseInt(m[1], 10) : null;
+      porNucleo.push({ core: idx, temp: s.value, label: s.desc || s.key });
+    });
+
+    // Ordenar: core 0..N primero, luego los que no tienen idx
+    porNucleo.sort((a, b) => {
+      if (a.core === null && b.core === null) return 0;
+      if (a.core === null) return 1;
+      if (b.core === null) return -1;
+      return a.core - b.core;
+    });
+  }
+
+  // 3) Fallback real para CPU: osx-cpu-temp (tu caso funciona)
+  // Si iSMC no entregó CPU usable, usamos osx-cpu-temp
+  let fuenteCpu = fuenteISMC ? 'iSMC' : 'N/A';
+  if (cpuPackage === null) {
+    const r3 = execCmd('osx-cpu-temp', 2000);
+    diag.osx_cpu_temp_ok = r3.ok;
+    diag.osx_cpu_temp_stderr = r3.stderr?.trim() || '';
+    diag.osx_cpu_temp_stdout = (r3.stdout || '').trim();
+
+    if (r3.ok && (r3.stdout || '').trim()) {
+      const m = r3.stdout.match(/-?\d+(?:[.,]\d+)?/);
+      if (m) {
+        cpuPackage = parseFloat(m[0].replace(',', '.'));
+        fuenteCpu = 'osx-cpu-temp';
+      }
+    }
+  }
+
+  // Fuente GPU
+  const fuenteGpu = gpu !== null ? 'iSMC' : 'N/A';
+
+  return {
+    cpuPackage,
+    gpu,
+    porNucleo,
+    fuenteCpu,
+    fuenteGpu,
+    diag
+  };
+}
+
+
+// === NUEVO: Temperaturas (CPU / GPU / por núcleo) ===
 function obtenerTemperaturas() {
   const plataforma = os.platform();
 
-  let cpuC = null;
-  let cpuFuente = '';
-  let gpuC = null;
-  let gpuFuente = '';
+  let cpuPackage = null;
+  let cpuFuente = 'N/A';
+  let gpuTemp = null;
+  let gpuFuente = 'N/A';
   let gpuNombre = '';
+  let porNucleo = [];
   const warnings = [];
+  let topSensores = [];
 
-  // ---------- macOS ----------
-  // ---------- macOS ----------
-  if (plataforma === 'darwin') {
-    // Nombre de GPU (para mostrarlo aunque no haya temp)
-    const gpuNameOut = execSeguro(
+  if (plataforma !== 'darwin') {
+    return {
+      cpu: { package: null, porNucleo: [], fuente: 'N/A' },
+      gpu: { temp: null, fuente: 'N/A', nombre: '' },
+      topSensores: [],
+      warnings: ['Detalle térmico por núcleo está orientado a macOS (SMC).']
+    };
+  }
+
+  // Nombre GPU (aunque no haya temp)
+  try {
+    const gpuNameOut = execSync(
       `system_profiler SPDisplaysDataType | awk -F": " '/Chipset Model/{print $2; exit}'`,
-      2500
-    );
+      { encoding: 'utf-8', timeout: 2500, stdio: ['ignore', 'pipe', 'ignore'] }
+    ).trim();
     gpuNombre = gpuNameOut || '';
+  } catch {}
 
-    // ✅ PRIORIDAD 1: smctemp (CPU + GPU) (Homebrew tap)
-    if (comandoDisponible('smctemp')) {
-      const outCpu = execSeguro('smctemp -c -n3 -f', 1500); // imprime número (ej: 64.2)
-      const outGpu = execSeguro('smctemp -g -n3 -f', 1500); // imprime número (ej: 36.2)
+  // ===== 1) iSMC (si existe) =====
+  if (typeof comandoDisponible === 'function' ? comandoDisponible('iSMC') : false) {
+    try {
+      const raw = execSync('iSMC temp -o json', { encoding: 'utf-8', timeout: 3000 });
+      const parsed = JSON.parse(raw);
 
-      cpuC = extraerNumero(outCpu);
-      gpuC = extraerNumero(outGpu);
+      const items =
+        Array.isArray(parsed) ? parsed :
+        Array.isArray(parsed?.data) ? parsed.data :
+        Array.isArray(parsed?.items) ? parsed.items :
+        Array.isArray(parsed?.temps) ? parsed.temps :
+        [];
 
-      cpuFuente = 'smctemp';
-      gpuFuente = 'smctemp';
+      const norm = items.map((o) => ({
+        key: String(o.key ?? o.Key ?? o.name ?? o.Name ?? '').trim(),
+        desc: String(o.desc ?? o.Desc ?? o.description ?? o.Description ?? '').trim(),
+        value: o.value ?? o.Value ?? o.val ?? o.Val ?? o.temp ?? o.Temp ?? null,
+        unit: String(o.unit ?? o.Unit ?? '').trim()
+      })).filter(x => x.key || x.desc);
 
-      if (cpuC == null) warnings.push('smctemp no devolvió temperatura CPU (sensor no disponible).');
-      if (gpuC == null) warnings.push('smctemp no devolvió temperatura GPU (sensor no disponible).');
+      // 1a) Por núcleo: por desc ("CPU Core 0") o por key SMC tipo TC0C, TC1C...
+      porNucleo = norm
+        .map((t) => {
+          const k = t.key.toUpperCase();
 
-      return {
-        cpu: { celsius: cpuC, fuente: cpuFuente },
-        gpu: { celsius: gpuC, fuente: gpuFuente, nombre: gpuNombre || '' },
-        warnings
-      };
-    }
+          // Caso 1: descripción tipo "CPU Core 0"
+          const mDesc = t.desc.match(/core\s*(\d+)/i);
+          if (mDesc) return { nucleo: `Core ${mDesc[1]}`, c: parseTemp(t.value), src: `iSMC:${t.key || t.desc}` };
 
-    // CPU fallback: osx-cpu-temp
-    if (comandoDisponible('osx-cpu-temp')) {
-      const out = execSeguro('osx-cpu-temp', 1500); // ej: "55.0°C"
-      cpuC = extraerNumero(out);
-      cpuFuente = 'osx-cpu-temp';
-    } else {
-      warnings.push('macOS: instala "smctemp" (recomendado) o "osx-cpu-temp" para CPU.');
-    }
+          // Caso 2: key SMC tipo TC0C, TC1C, TC2C...
+          if (/^TC\dC$/.test(k)) {
+            const idx = k.match(/^TC(\d)C$/)?.[1];
+            return { nucleo: `Core ${idx ?? '?'}`, c: parseTemp(t.value), src: `iSMC:${t.key}` };
+          }
 
-    // GPU fallback: powermetrics (requiere sudo)
-    if (gpuC == null && process.getuid && process.getuid() === 0) {
-      const out = execSeguro('powermetrics -n 1 -i 1 --samplers smc 2>/dev/null', 3500);
-      const m = out && out.match(/GPU die temperature:\s*([0-9.]+)\s*C/i);
-      if (m) {
-        gpuC = Number(m[1]);
-        gpuFuente = 'powermetrics';
+          return null;
+        })
+        .filter(Boolean)
+        .filter(x => x.c != null)
+        .sort((a, b) => {
+          const ai = parseInt(a.nucleo.replace(/\D+/g, ''), 10);
+          const bi = parseInt(b.nucleo.replace(/\D+/g, ''), 10);
+          if (Number.isFinite(ai) && Number.isFinite(bi)) return ai - bi;
+          return a.nucleo.localeCompare(b.nucleo);
+        });
+
+      // 1b) CPU package/die/proximity: preferir keys típicas
+      const preferCpuKeys = ['TC0P', 'TC0D', 'TC0E', 'TC0F', 'TC0H'];
+      const cpuKeyHit = norm.find(t => preferCpuKeys.includes(t.key.toUpperCase()));
+
+      const cpuDescHit =
+        norm.find(t => /cpu/i.test(t.desc) && /(die|package|proximity|peci)/i.test(t.desc)) ||
+        norm.find(t => /proximity/i.test(t.desc) && /cpu/i.test(t.desc)) ||
+        norm.find(t => /cpu/i.test(t.desc));
+
+      if (porNucleo.length > 0) {
+        cpuPackage = Math.max(...porNucleo.map(x => x.c));
+        cpuFuente = 'iSMC (max core)';
+      } else if (cpuKeyHit) {
+        cpuPackage = parseTemp(cpuKeyHit.value);
+        cpuFuente = `iSMC (${cpuKeyHit.key})`;
+      } else if (cpuDescHit) {
+        cpuPackage = parseTemp(cpuDescHit.value);
+        cpuFuente = `iSMC (${cpuDescHit.key || cpuDescHit.desc})`;
       }
-    }
 
-    if (gpuC == null) {
-      warnings.push('macOS: para GPU, instala "smctemp" (recomendado). Con powermetrics suele requerir sudo.');
+      // 1c) GPU: keys TG0D/TG0P o desc con GPU
+      const gpuKeyHit =
+        norm.find(t => /^TG\d[DP]$/.test(t.key.toUpperCase())) ||
+        norm.find(t => /^TG0/.test(t.key.toUpperCase()));
+
+      const gpuDescHit =
+        norm.find(t => /gpu/i.test(t.desc) && /(die|proximity|temp|core)/i.test(t.desc)) ||
+        norm.find(t => /gpu/i.test(t.desc));
+
+      if (gpuKeyHit) {
+        gpuTemp = parseTemp(gpuKeyHit.value);
+        gpuFuente = `iSMC (${gpuKeyHit.key})`;
+      } else if (gpuDescHit) {
+        gpuTemp = parseTemp(gpuDescHit.value);
+        gpuFuente = `iSMC (${gpuDescHit.key || gpuDescHit.desc})`;
+      }
+
+      // 1d) Top sensores (para mostrar algo útil siempre)
+      topSensores = norm
+        .map(t => ({ nombre: t.desc || t.key, key: t.key, c: parseTemp(t.value) }))
+        .filter(x => x.c != null)
+        .sort((a, b) => b.c - a.c)
+        .slice(0, 8);
+
+      // Si iSMC existe pero no dio nada parseable
+      if (topSensores.length === 0) {
+        warnings.push('iSMC respondió, pero no se pudieron parsear temperaturas (formato/sensores no disponibles).');
+      }
+    } catch (e) {
+      warnings.push('iSMC falló al entregar JSON (o no fue parseable).');
     }
   }
 
-
-  // ---------- Linux ----------
-  else if (plataforma === 'linux') {
-    if (comandoDisponible('sensors')) {
-      const out = execSeguro('sensors', 2500);
-      const line = out && out.split('\n').find(l => /Package id 0:|Tctl:|Tdie:|temp1:/i.test(l));
-      cpuC = extraerNumero(line);
-      cpuFuente = cpuC != null ? 'sensors' : '';
-    } else {
-      warnings.push('Linux: instala lm-sensors (comando "sensors") para temperatura CPU.');
-    }
-
-    if (comandoDisponible('nvidia-smi')) {
-      const out = execSeguro('nvidia-smi --query-gpu=name,temperature.gpu --format=csv,noheader,nounits', 2000);
-      if (out) {
-        const first = out.split('\n')[0];
-        const parts = first.split(',').map(s => s.trim());
-        gpuNombre = parts[0] || '';
-        gpuC = parts[1] ? Number(parts[1]) : null;
-        gpuFuente = 'nvidia-smi';
+  // ===== 2) Fallback CPU package a osx-cpu-temp (para que nunca sea N/A) =====
+  if (cpuPackage == null && (typeof comandoDisponible === 'function' ? comandoDisponible('osx-cpu-temp') : false)) {
+    try {
+      const out = execSync('osx-cpu-temp', { encoding: 'utf-8', timeout: 1500 }).trim();
+      const n = parseTemp(out);
+      if (n != null) {
+        cpuPackage = n;
+        cpuFuente = 'osx-cpu-temp';
       }
-    } else if (comandoDisponible('rocm-smi')) {
-      const out = execSeguro('rocm-smi --showtemp', 2500);
-      gpuC = extraerNumero(out);
-      gpuFuente = gpuC != null ? 'rocm-smi' : '';
-      gpuNombre = gpuC != null ? 'AMD GPU' : '';
-    } else {
-      warnings.push('GPU: para NVIDIA se usa "nvidia-smi"; para AMD a veces "rocm-smi".');
-    }
+    } catch {}
   }
 
-  // ---------- Windows ----------
-  else if (plataforma === 'win32') {
-    const outCpu = execSeguro(
-      'powershell -NoProfile -Command "($t=Get-CimInstance -Namespace root/wmi -ClassName MSAcpi_ThermalZoneTemperature | Select-Object -First 1 -ExpandProperty CurrentTemperature); if($t){[math]::Round(($t/10)-273.15,1)}"',
-      3000
-    );
-    cpuC = extraerNumero(outCpu);
-    cpuFuente = cpuC != null ? 'MSAcpi_ThermalZoneTemperature' : '';
-
-    if (comandoDisponible('nvidia-smi')) {
-      const out = execSeguro('nvidia-smi --query-gpu=name,temperature.gpu --format=csv,noheader,nounits', 2000);
-      if (out) {
-        const first = out.split('\n')[0];
-        const parts = first.split(',').map(s => s.trim());
-        gpuNombre = parts[0] || '';
-        gpuC = parts[1] ? Number(parts[1]) : null;
-        gpuFuente = 'nvidia-smi';
-      }
-    } else {
-      warnings.push('Windows: GPU temp suele requerir drivers NVIDIA + nvidia-smi.');
-    }
+  if (porNucleo.length === 0) {
+    warnings.push('Tu modelo no expone temperatura por núcleo (Core X) vía SMC/HID, o no hay keys TC#C disponibles.');
   }
 
   return {
-    cpu: { celsius: cpuC, fuente: cpuFuente || 'N/A' },
-    gpu: { celsius: gpuC, fuente: gpuFuente || 'N/A', nombre: gpuNombre || '' },
+    cpu: {
+      package: cpuPackage,
+      fuente: cpuFuente,
+      porNucleo: porNucleo.map(x => ({ nucleo: x.nucleo, c: x.c }))
+    },
+    gpu: { temp: gpuTemp, fuente: gpuFuente, nombre: gpuNombre || '' },
+    topSensores,
     warnings
   };
 }
+
+
 
 
 // 7. Generar HTML del dashboard
@@ -807,7 +1031,9 @@ function generarDashboardHTML() {
   const logs = obtenerUltimosLogs(10);
   const archivos = listarDirectorio(process.cwd());
 
-  const temperaturas = obtenerTemperaturas(); 
+ const temps = obtenerTemperaturas();
+
+
   
   return `
 <!DOCTYPE html>
@@ -1096,35 +1322,74 @@ function generarDashboardHTML() {
         </div>
       </div>
 
-            <!-- Temperaturas CPU / GPU -->
-      <div class="card">
-        <h2>🌡️ Temperaturas</h2>
+      
+            <!-- Temperaturas (CPU/GPU) -->
+  
+<div class="card">
+  <h2>🌡️ Temperaturas</h2>
 
-        <div class="info-row">
-          <span class="info-label">CPU:</span>
-          <span class="info-value" style="font-weight: 700; color: ${colorTemp(temperaturas.cpu.celsius)};">
-            ${temperaturas.cpu.celsius != null ? `${temperaturas.cpu.celsius.toFixed(1)} °C` : 'N/A'}
-          </span>
+  <div class="info-row">
+    <span class="info-label">CPU (package):</span>
+    <span class="info-value">${formatearCelsius(temps.cpu.package)}</span>
+  </div>
+
+  <div class="info-row">
+  <span class="info-label">GPU:</span>
+  <span class="info-value">
+    ${formatearCelsius(temps.gpu.temp)}${temps.gpu.nombre ? ` (${temps.gpu.nombre})` : ''}
+  </span>
+</div>
+
+<div class="info-row">
+  <span class="info-label">Fuente GPU:</span>
+  <span class="info-value">${temps.gpu.fuente}</span>
+</div>
+
+
+  <div class="info-row">
+    <span class="info-label">Fuente GPU:</span>
+    <span class="info-value">${temps.gpu.fuente}${temps.gpu.nombre ? ' - ' + temps.gpu.nombre : ''}</span>
+  </div>
+
+  ${
+    temps.cpu.porNucleo && temps.cpu.porNucleo.length > 0
+      ? `
+    <hr style="margin: 15px 0; border: none; border-top: 1px solid #e0e0e0;">
+    <h3 style="color: #555; font-size: 0.95em; margin-bottom: 10px;">🔥 Por núcleo (si existe)</h3>
+    <div style="max-height: 140px; overflow-y: auto;">
+      ${temps.cpu.porNucleo.map(item => `
+        <div style="background: #f8f9fa; padding: 6px 10px; margin: 5px 0; border-radius: 4px; display: flex; justify-content: space-between; font-size: 0.85em;">
+          <span><strong>${item.nucleo}</strong></span>
+          <span style="font-weight: 700;">${formatearCelsius(item.c)}</span>
         </div>
+      `).join('')}
+    </div>
+    `
+      : `
+    <p style="margin-top: 12px; color: #777; font-size: 0.9em; line-height: 1.3;">
+      ℹ️ En este equipo no hay lectura de temperatura <strong>por núcleo</strong> disponible.
+      <br>Normalmente se expone solo la temperatura del <em>CPU package</em> (como te entrega <code>osx-cpu-temp</code>).
+    </p>
+    `
+  }
 
-        <div class="info-row">
-          <span class="info-label">GPU:</span>
-          <span class="info-value" style="font-weight: 700; color: ${colorTemp(temperaturas.gpu.celsius)};">
-            ${temperaturas.gpu.celsius != null ? `${temperaturas.gpu.celsius.toFixed(1)} °C` : 'N/A'}
-          </span>
+  ${
+  temps.warnings && temps.warnings.length > 0
+    ? `
+      <details style="margin-top: 12px;">
+        <summary style="cursor:pointer; color:#a06a00; font-size:0.9em;">
+          ⚠️ Detalles de sensores (ver)
+        </summary>
+        <div style="margin-top: 8px; font-size: 0.85em; color: #a06a00; background:#fff3cd; padding:10px; border-radius:6px;">
+          ${[...new Set(temps.warnings)].map(w => `• ${w}`).join('<br>')}
         </div>
+      </details>
+    `
+    : ''
+}
 
-        <div style="margin-top: 10px; color: #666; font-size: 0.85em; line-height: 1.4;">
-          <div><strong>Fuente CPU:</strong> ${temperaturas.cpu.fuente}</div>
-          <div><strong>Fuente GPU:</strong> ${temperaturas.gpu.fuente}${temperaturas.gpu.nombre ? ` (${temperaturas.gpu.nombre})` : ''}</div>
-        </div>
+</div>
 
-        ${temperaturas.warnings?.length ? `
-          <div style="margin-top: 12px; padding: 10px; background: #fff3cd; border-radius: 6px; font-size: 0.85em; color: #664d03;">
-            ${temperaturas.warnings.map(w => `• ${w}`).join('<br>')}
-          </div>
-        ` : ''}
-      </div>
 
       
       <!-- Logs (FS) - Comentado -->
